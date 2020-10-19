@@ -6,7 +6,7 @@ import { useLocalStorageState } from './utils';
 
 export const WALLET_PROVIDERS = [
   { name: 'sollet.io', url: 'https://www.sollet.io' },
-  // { name: 'solflare.com', url: 'https://solflare.com/access-wallet' },
+  { name: 'solflare.com', url: 'https://solflare.com/access-wallet' },
 ];
 
 const WalletContext = React.createContext<any>(null);
@@ -28,7 +28,6 @@ export function WalletProvider({ children = null as any }) {
     console.log('trying to connect');
     wallet.on('connect', () => {
       console.log('connected');
-      debugger;
       setConnected(true);
       let walletPublicKey = wallet.publicKey.toBase58();
       let keyToDisplay =

@@ -3,18 +3,35 @@ import { Account, clusterApiUrl, Connection } from '@solana/web3.js';
 import React, { useContext, useEffect, useMemo } from 'react';
 import { setProgramIds } from './ids';
 
+export type ENV = 'mainnet-beta' | 'testnet' | 'devnet' | 'localnet';
+
 export const ENDPOINTS = [
   {
-    name: 'mainnet-beta',
+    name: 'mainnet-beta' as ENV,
     endpoint: clusterApiUrl('mainnet-beta'),
   },
-  { name: 'testnet', endpoint: clusterApiUrl('testnet') },
-  { name: 'devnet', endpoint: clusterApiUrl('devnet') },
-  { name: 'localnet', endpoint: 'http://127.0.0.1:8899' },
+  { name: 'testnet' as ENV, endpoint: clusterApiUrl('testnet') },
+  { name: 'devnet' as ENV, endpoint: clusterApiUrl('devnet') },
+  { name: 'localnet'  as ENV, endpoint: 'http://127.0.0.1:8899' },
 ];
 
+const DEFAULT = ENDPOINTS[0].endpoint;
 
-const ConnectionContext = React.createContext<any>(null);
+interface ConnectionConfig {
+  connection: Connection;
+  sendConnection: Connection;
+  endpoint: string;
+  env: ENV;
+  setEndpoint: (val: string) => void;
+}
+
+const ConnectionContext = React.createContext<ConnectionConfig>({
+  endpoint: DEFAULT,
+  connection:  new Connection(DEFAULT, 'recent'),
+  sendConnection:  new Connection(DEFAULT, 'recent'),
+  setEndpoint: () => {},
+  env: ENDPOINTS[0].name
+});
 
 export function ConnectionProvider({ children = undefined as any }) {
   const [endpoint, setEndpoint] = useLocalStorageState(
@@ -29,7 +46,9 @@ export function ConnectionProvider({ children = undefined as any }) {
     endpoint,
   ]);
 
-  setProgramIds(ENDPOINTS.find(end => end.endpoint === endpoint)?.name || '');
+  const env = ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[0].name;
+
+  setProgramIds(env);
 
   // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
   // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
@@ -67,7 +86,7 @@ export function ConnectionProvider({ children = undefined as any }) {
 
   return (
     <ConnectionContext.Provider
-      value={{ endpoint, setEndpoint, connection, sendConnection }}
+      value={{ endpoint, setEndpoint, connection, sendConnection, env }}
     >
       {children}
     </ConnectionContext.Provider>
@@ -80,10 +99,10 @@ export function useConnection() {
 }
 
 export function useSendConnection() {
-  return useContext(ConnectionContext).sendConnection;
+  return useContext(ConnectionContext)?.sendConnection;
 }
 
 export function useConnectionConfig() {
   const context = useContext(ConnectionContext);
-  return { endpoint: context.endpoint, setEndpoint: context.setEndpoint };
+  return { endpoint: context.endpoint, setEndpoint: context.setEndpoint, env: context.env };
 }

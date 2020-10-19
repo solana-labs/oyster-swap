@@ -15,7 +15,7 @@ export const AddToLiquidity = () => {
     const { wallet } = useWallet();
     const connection = useConnection();
     const [pendingTx, setPendingTx] = useState(false);
-    const { A, B,setLastTypedAccount } = useCurrencyPairState();
+    const { A, B, setLastTypedAccount } = useCurrencyPairState();
     const pool = usePoolForBasket([A?.account?.info.mint.toBase58(), B?.account?.info.mint.toBase58()]);
 
     const provideLiquidity = async () => {

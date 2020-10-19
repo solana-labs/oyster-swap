@@ -1,15 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { calculateDependentAmount, usePoolForBasket } from '../utils/pools';
+import { calculateDependentAmount, usePoolForBasket } from './../../utils/pools';
 import { Card, Select, } from 'antd';
-import { NumericInput } from './numericInput';
-import { getTokenName } from '../utils/utils';
-import { useUserAccounts, useMint, useSelectedAccount } from '../utils/accounts';
-import './currencyInput.less';
+import { NumericInput } from './../numericInput';
+import { getTokenName } from './../../utils/utils';
+import { useUserAccounts, useMint, useSelectedAccount } from './../../utils/accounts';
+import './styles.less';
 import { MintInfo } from '@solana/spl-token';
-import { useConnection } from '../utils/connection';
-import { Identicon } from './identicon';
+import { useConnection, useConnectionConfig } from './../../utils/connection';
+import { Identicon } from './../identicon';
+import PopularTokens from './../../utils/token-list.json';
 
 const { Option } = Select;
+
+interface KnownToken {
+    tokenSymbol: string;
+    tokenName: string;
+    icon: string;
+    mintAddress: string;
+}
+
+const TokenIcon = (props:{ mintAddress: string, icon?: string }) => {
+    if(props.icon) {
+        return <img key={props.mintAddress} width="20" height="20" src={props.icon} style={{ marginRight: '0.5rem', borderRadius: '1rem' }} />
+    }
+
+    return <Identicon address={props.mintAddress} style={{ marginRight: '0.5rem' }} />;
+}
 
 export const useCurrencyPairState = () => {
     const connection = useConnection();
@@ -85,19 +101,56 @@ export const CurrencyInput = (props: {
     onAccountChange?: (account: string) => void,
 }) => {
     const { userAccounts } = useUserAccounts();
-    const currentAccount = userAccounts?.find(a => a.pubkey.toBase58() === props.account);
-    const currentMintAddress = currentAccount?.info.mint.toBase58();
-    const mint = useMint(currentMintAddress);
+    const [ selectedMint, setSelectedMint] = useState('');
+    const mint = useMint(selectedMint);
 
-    // TODO: combine with predefined token list
-    const items = userAccounts.map(account => {
-        return <Option value={account.pubkey.toBase58()} title={account.info.mint.toBase58()}>
-            {/* {data && <img key={props.account} width="20" height="20" src={`data:image/png;base64,${data}`} />} */}
-            {getTokenName(account.info.mint.toBase58())}
+    const { env } = useConnectionConfig();
+
+    useEffect(() =>{
+        const currentAccount = userAccounts?.find(a => a.pubkey.toBase58() === props.account);
+        const currentMintAddress = currentAccount?.info.mint.toBase58();
+        //on account change find mint ...
+        if(selectedMint !== currentMintAddress && currentMintAddress) {
+            setSelectedMint(currentMintAddress);
+        }
+        
+    }, [props.account]);
+
+    const tokens = PopularTokens[env] as KnownToken[];
+    const knownMints = tokens.reduce((map,item) =>{
+        map.set(item.mintAddress, item);
+        return map;
+    }, new Map<string, KnownToken>()) ;
+    
+    const knownMint = knownMints.get(selectedMint);
+
+    const renderPopularTokens = tokens.map(item => {
+        // TODO: 
+
+        return <Option value={item.mintAddress} title={item.mintAddress}>
+            <div key={item.mintAddress} style={{ display: 'flex', alignItems: 'center' }} >
+                <TokenIcon mintAddress={item.mintAddress} icon={item.icon} />
+                {item.tokenSymbol}
+            </div>
+        </Option>
+    });
+
+    const renderAdditionalTokens = userAccounts.map(account => {
+        const mint = account.info.mint.toBase58();
+        if(knownMints.has(mint)) {
+            return null;
+        }
+
+        return <Option value={mint} title={mint}>
+            <div key={mint} style={{ display: 'flex', alignItems: 'center', opacity: 0.6 }} >
+                <TokenIcon mintAddress={mint} />
+                {getTokenName(mint)}
+            </div>
         </Option>
     });
 
     const userUiBalance = () => {
+        const currentAccount = userAccounts?.find(a => a.info.mint.toBase58() === selectedMint);
         if(currentAccount && mint) {
             return currentAccount.info.amount.toNumber() / Math.pow(10, mint.decimals);
         }
@@ -120,13 +173,18 @@ export const CurrencyInput = (props: {
             }} style={{ fontSize: 20, boxShadow: 'none', borderColor: 'transparent', outline: 'transpaernt' }} placeholder="0.00" />
             
             <div className="ccy-input-header-right" style={{ display: 'felx' }}>
-                <Identicon address={currentMintAddress} />
-                <Select size="large"  style={{ width: '100%' }} placeholder="CCY" value={props.account}   
+                <Select size="large"  style={{ minWidth: 80 }} placeholder="CCY" value={selectedMint}  
+                dropdownMatchSelectWidth={true}
+                dropdownStyle={{ minWidth: 120 }} 
                 onChange={(item) => {
-                    if (props.onAccountChange) {
-                        props.onAccountChange(item);
+                    // TODO: match mint to user account ...
+
+                    setSelectedMint(item);
+                    const userAccount = userAccounts?.find(a => a.info.mint.toBase58() === item);
+                    if (props.onAccountChange && userAccount) {
+                        props.onAccountChange(userAccount.pubkey.toBase58());
                     }
-                }}>{items}</Select>
+                }}>{[...renderPopularTokens, ...renderAdditionalTokens]}</Select>
             </div>
         </div>
     </Card>);

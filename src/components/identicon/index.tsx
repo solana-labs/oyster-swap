@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 
 import Jazzicon from 'jazzicon'
-import { useWallet } from './../../utils/wallet';
 
 import './style.less';
 
-export const Identicon = (props: { address?: string }) => {
+export const Identicon = (props: { address?: string, style?: React.CSSProperties }) => {
     const { address } = props;
     const ref = useRef<HTMLDivElement>()
 
@@ -16,5 +15,5 @@ export const Identicon = (props: { address?: string }) => {
         }
     }, [address])
 
-    return <div className="identicon-wrapper" ref={ref as any} />;
+    return <div className="identicon-wrapper" ref={ref as any} style={props.style} />;
 }

@@ -21,9 +21,6 @@ FONTS:
   Body text: Rubik
   Everything else: Saira
 Mobile: ... 
-
-
-
 */
 
 const AccountInfo = (props: {}) => {
