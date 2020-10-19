@@ -21,7 +21,7 @@ interface KnownToken {
 
 const TokenIcon = (props:{ mintAddress: string, icon?: string }) => {
     if(props.icon) {
-        return <img key={props.mintAddress} width="20" height="20" src={props.icon} style={{ marginRight: '0.5rem', borderRadius: '1rem' }} />
+        return <img key={props.mintAddress} width="20" height="20" src={props.icon} style={{ marginRight: '0.5rem', borderRadius: '1rem', backgroundColor: 'white' }} />
     }
 
     return <Identicon address={props.mintAddress} style={{ marginRight: '0.5rem' }} />;
