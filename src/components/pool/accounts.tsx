@@ -4,8 +4,10 @@ import { useOwnedPools } from './../../utils/pools';
 import {RemoveLiquidity} from './remove';
 import { getTokenName } from '../../utils/utils';
 import { useMint } from '../../utils/accounts';
+import { useConnectionConfig } from '../../utils/connection';
 
 const PoolItem = (props: { item: any }) => {
+    const { env } = useConnectionConfig();
     const item = props.item;
     const mint = useMint(item.account.info.mint.toBase58());
     
@@ -22,7 +24,7 @@ const PoolItem = (props: { item: any }) => {
             ]}
         >
             <div>{amount.toFixed(2)}</div>
-            <div style={{marginLeft: 10  } }>{getTokenName(item.account.info.mint.toBase58())}</div>
+            <div style={{marginLeft: 10  } }>{getTokenName(env, item.account.info.mint.toBase58())}</div>
         </List.Item>;
     }
 

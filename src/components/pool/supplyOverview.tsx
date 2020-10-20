@@ -4,6 +4,7 @@ import { Card } from 'antd';
 import { getTokenName, formatTokenAmount } from '../../utils/utils';
 import { PieChart, Pie, Cell } from 'recharts';
 import { useMint, useAccount } from '../../utils/accounts';
+import { useConnectionConfig } from '../../utils/connection';
 
 
 const RADIAN = Math.PI / 180;
@@ -26,20 +27,21 @@ export const SupplyOverview = (props: { pool?: PoolInfo }) => {
     const mintB = useMint(pool?.pubkeys.accountMints[1].toBase58());
     const accountA = useAccount(pool?.pubkeys.accounts[0]);
     const accountB = useAccount(pool?.pubkeys.accounts[1]);
-
+    const { env } = useConnectionConfig();
+    
     if (!pool || !accountA || !accountB ) {
         return null;
     }
 
     const data = [
         {
-            name: getTokenName(pool?.pubkeys.accountMints[0].toBase58()),
+            name: getTokenName(env, pool?.pubkeys.accountMints[0].toBase58()),
             value: accountA?.info.amount?.toNumber(),
             color: '#6610f2'
 
         },
         {
-            name: getTokenName(pool?.pubkeys.accountMints[1].toBase58()),
+            name: getTokenName(env, pool?.pubkeys.accountMints[1].toBase58()),
             value: accountB?.info.amount?.toNumber(),
             color: '#d83aeb'
         }

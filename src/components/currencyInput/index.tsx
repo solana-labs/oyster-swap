@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { calculateDependentAmount, usePoolForBasket } from './../../utils/pools';
 import { Card, Select, } from 'antd';
 import { NumericInput } from './../numericInput';
-import { getTokenName } from './../../utils/utils';
+import { getTokenName, isKnownMint, KnownToken } from './../../utils/utils';
 import { useUserAccounts, useMint, useSelectedAccount } from './../../utils/accounts';
 import './styles.less';
 import { MintInfo } from '@solana/spl-token';
@@ -11,13 +11,6 @@ import { Identicon } from './../identicon';
 import PopularTokens from './../../utils/token-list.json';
 
 const { Option } = Select;
-
-interface KnownToken {
-    tokenSymbol: string;
-    tokenName: string;
-    icon: string;
-    mintAddress: string;
-}
 
 const TokenIcon = (props:{ mintAddress: string, icon?: string }) => {
     if(props.icon) {
@@ -117,16 +110,8 @@ export const CurrencyInput = (props: {
     }, [props.account]);
 
     const tokens = PopularTokens[env] as KnownToken[];
-    const knownMints = tokens.reduce((map,item) =>{
-        map.set(item.mintAddress, item);
-        return map;
-    }, new Map<string, KnownToken>()) ;
-    
-    const knownMint = knownMints.get(selectedMint);
 
     const renderPopularTokens = tokens.map(item => {
-        // TODO: 
-
         return <Option value={item.mintAddress} title={item.mintAddress}>
             <div key={item.mintAddress} style={{ display: 'flex', alignItems: 'center' }} >
                 <TokenIcon mintAddress={item.mintAddress} icon={item.icon} />
@@ -137,14 +122,14 @@ export const CurrencyInput = (props: {
 
     const renderAdditionalTokens = userAccounts.map(account => {
         const mint = account.info.mint.toBase58();
-        if(knownMints.has(mint)) {
+        if(isKnownMint(env, mint)) {
             return null;
         }
 
         return <Option value={mint} title={mint}>
             <div key={mint} style={{ display: 'flex', alignItems: 'center', opacity: 0.6 }} >
                 <TokenIcon mintAddress={mint} />
-                {getTokenName(mint)}
+                {getTokenName(env, mint)}
             </div>
         </Option>
     });
