@@ -66,14 +66,11 @@ export function getTokenName(env: ENV, mintAddress: string): string {
     return knownSymbol;
   }
 
-  // TODO: implement
   return shortenAddress(mintAddress).substring(10).toUpperCase();
 }
 
 export function getPoolName(env: ENV, pool: PoolInfo) {
   const sorted = pool.pubkeys.accountMints.sort();
-
-  debugger;
   return sorted.map(item => getTokenName(env, item.toBase58())).join('/');
 }
 
