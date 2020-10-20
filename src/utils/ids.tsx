@@ -1,12 +1,14 @@
 import { PublicKey } from "@solana/web3.js";
 
-let TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+export const WRAPPED_SOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
+let TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');  
+
 let SWAP_PROGRAM_ID: PublicKey;
 
 export const PROGRAM_IDS = [
     {
         name: 'mainnet-beta',
-        swap: () => new PublicKey('CrRvVBS4Hmj47TPU3cMukurpmCUYUrdHYxTQBxncBGqw') // TODO: deploy
+        swap: () => new PublicKey('HYv7pNgHkkBGxfrnCre2pMgLpWm7LJPKxiyZVytN5HrM')
     },
     {
         name: 'testnet',
