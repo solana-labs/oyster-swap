@@ -4,15 +4,10 @@ import { useWallet } from './wallet';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { programIds, WRAPPED_SOL_MINT } from './ids';
 import { AccountLayout, u64, AccountInfo as TokenAccountInfo, MintInfo, MintLayout } from '@solana/spl-token';
-import { PoolInfo, usePools } from './pools';
+import { usePools } from './pools';
+import { TokenAccount, PoolInfo } from './../models'
 
 const AccountsContext = React.createContext<any>(null);
-
-export interface TokenAccount {
-  pubkey: PublicKey;
-  account: AccountInfo<Buffer>;
-  info: TokenAccountInfo;
-}
 
 class AccountUpdateEvent extends Event {
   static type = 'AccountUpdate';
@@ -30,7 +25,6 @@ class EventEmitter extends EventTarget {
 }
 
 const accountEmitter = new EventEmitter();
-
 
 const mintCache = new Map<string, Promise<MintInfo>>();
 const pendingAccountCalls = new Map<string, Promise<TokenAccount>>();

@@ -1,10 +1,10 @@
 import React, {  } from 'react';
-import { PoolInfo } from '../../utils/pools';
 import { Card } from 'antd';
 import { getTokenName, formatTokenAmount } from '../../utils/utils';
 import { PieChart, Pie, Cell } from 'recharts';
 import { useMint, useAccount } from '../../utils/accounts';
 import { useConnectionConfig } from '../../utils/connection';
+import { PoolInfo } from '../../models';
 
 
 const RADIAN = Math.PI / 180;

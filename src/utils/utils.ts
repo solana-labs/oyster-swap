@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { MintInfo } from '@solana/spl-token';
-import { TokenAccount } from './accounts';
 
 import PopularTokens from './token-list.json';
 import { ENV } from './connection';
+import { PoolInfo, TokenAccount } from './../models';
 
 
 export interface KnownToken {
@@ -68,6 +68,13 @@ export function getTokenName(env: ENV, mintAddress: string): string {
 
   // TODO: implement
   return shortenAddress(mintAddress).substring(10).toUpperCase();
+}
+
+export function getPoolName(env: ENV, pool: PoolInfo) {
+  const sorted = pool.pubkeys.accountMints.sort();
+
+  debugger;
+  return sorted.map(item => getTokenName(env, item.toBase58())).join('/');
 }
 
 export function isKnownMint(env: ENV, mintAddress: string) {

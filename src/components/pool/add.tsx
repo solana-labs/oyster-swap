@@ -87,7 +87,7 @@ export const AddToLiquidity = () => {
         />
         {pool && <SupplyOverview pool={pool} />}
         <Button type="primary" size="large" onClick={provideLiquidity} style={{ width: '100%'  }}
-            disabled={pendingTx || !A.account || !B.account}>
+            disabled={pendingTx || !A.account || !B.account || A.account === B.account}>
             Provide Liquidity
             {pendingTx && <Spin indicator={antIcon} />}
         </Button>

@@ -95,7 +95,7 @@ export const TradeEntry = () => {
             />
         </div>
         <Button type="primary" size="large" onClick={handleSwap} style={{ width: '100%' }}
-            disabled={pendingTx || !A.account || !B.account}>
+            disabled={pendingTx || !A.account || !B.account || A.account === B.account}>
             Swap
             {pendingTx && <Spin indicator={antIcon} />}
         </Button>

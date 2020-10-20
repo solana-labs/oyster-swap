@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from 'antd';
 
-import { PoolInfo, removeLiquidity } from '../../utils/pools';
+import { removeLiquidity } from '../../utils/pools';
 import { useWallet } from '../../utils/wallet';
 import { useConnection } from '../../utils/connection';
-import { TokenAccount } from '../../utils/accounts';
+import { PoolInfo, TokenAccount } from '../../models';
 
 export const RemoveLiquidity = (props: { instance: { account: TokenAccount, pool: PoolInfo } }) => {
     const { account, pool } = props.instance;

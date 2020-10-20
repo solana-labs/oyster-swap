@@ -2,7 +2,7 @@ import React from 'react';
 import { List, ConfigProvider, Empty } from 'antd'
 import { useOwnedPools } from './../../utils/pools';
 import {RemoveLiquidity} from './remove';
-import { getTokenName } from '../../utils/utils';
+import { getPoolName } from '../../utils/utils';
 import { useMint } from '../../utils/accounts';
 import { useConnectionConfig } from '../../utils/connection';
 
@@ -24,7 +24,7 @@ const PoolItem = (props: { item: any }) => {
             ]}
         >
             <div>{amount.toFixed(2)}</div>
-            <div style={{marginLeft: 10  } }>{getTokenName(env, item.account.info.mint.toBase58())}</div>
+            <div style={{marginLeft: 10  } }>{getPoolName(env, item.pool)}</div>
         </List.Item>;
     }
 

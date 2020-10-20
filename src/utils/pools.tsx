@@ -1,25 +1,17 @@
 import { Account, Connection, PublicKey, sendAndConfirmRawTransaction, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { useConnection } from "./connection";
+import { useConnection, useConnectionConfig } from "./connection";
 import * as BufferLayout from 'buffer-layout';
 import { useWallet } from "./wallet";
 import { useEffect, useState } from "react";
 import { Token, MintLayout, AccountLayout } from '@solana/spl-token';
 import { TokenSwap, TokenSwapLayout } from '@solana/spl-token-swap';
 import { notify } from "./notifications";
-import { cache, getCachedAccount, TokenAccount, useUserAccounts, useCachedPool } from "./accounts";
+import { cache, getCachedAccount, useUserAccounts, useCachedPool } from "./accounts";
 import { programIds, WRAPPED_SOL_MINT } from './ids';
+import { getTokenName } from "./utils";
+import { LiquidityComponent, PoolInfo, TokenAccount } from './../models';
 
 const LIQUIDITY_TOKEN_PRECISION = 8;
-
-export interface PoolInfo {
-    pubkeys: {
-        program: PublicKey;
-        accounts: PublicKey[];
-        accountMints: PublicKey[];
-        mint: PublicKey;
-    };
-    raw: any;
-}
 
 const createInitSwapInstruction = (
     tokenSwapAccount: Account,
@@ -91,10 +83,6 @@ export const sendTransaction = async (connection: any, wallet: any, instructions
     });
 
     return txid;
-}
-export interface LiquidityComponent {
-    amount: number;
-    account: TokenAccount;
 }
 
 export const removeLiquidity = async (connection: Connection, wallet: any, liquidityAmount: number, account: TokenAccount, pool?: PoolInfo) => {
@@ -289,7 +277,6 @@ export const addLiquidity = async (connection: Connection, wallet: any, componen
 
 export const usePools = () => {
     const connection = useConnection();
-    const { connected, wallet } = useWallet();
     const [pools, setPools] = useState<PoolInfo[]>([]);
 
     const getHoldings = (accounts: string[]) => {
@@ -307,7 +294,7 @@ export const usePools = () => {
                         .map(a => new PublicKey(a))
                 },
                 raw: item,
-            } as PoolInfo;
+            } as any as PoolInfo;
         };
 
         const queryPools = async () => {
@@ -320,7 +307,6 @@ export const usePools = () => {
                         pubkey: item.pubkey,
                     };
                 });
-
             let result: PoolInfo[] = [];
             for (let i = 0; i < swapAccounts.length; i++) {
                 const acc = swapAccounts[i];
@@ -338,8 +324,8 @@ export const usePools = () => {
                     result.push(pool);
 
                     await new Promise((resolve) => setTimeout(resolve, 500));
-                } catch {
-
+                } catch(err) {
+                    console.log(err)
                 }
             }
 
@@ -378,7 +364,7 @@ export const usePools = () => {
         return () => {
             connection.removeProgramAccountChangeListener(subID);
         }
-    }, [connected, connection, wallet?.publicKey])
+    }, [connection])
 
     return { pools };
 }

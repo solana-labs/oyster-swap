@@ -5,7 +5,7 @@ import Button from 'antd/lib/button';
 import Popover from 'antd/lib/popover';
 import { ExchangeView } from './components/exchange';
 import { shortenAddress } from './utils/utils';
-import { PoolAccounts } from './components/pool/accounts';
+import { PoolAccounts } from './components/pool/view';
 import { Settings } from './components/settings';
 import { SettingOutlined } from '@ant-design/icons';
 import { Info } from './components/info';
@@ -35,7 +35,7 @@ const AccountInfo = (props: {}) => {
     <span>{((account?.lamports || 0) / LAMPORTS_PER_SOL ).toFixed(2)} SOL</span>
     <div className="wallet-key">
       {shortenAddress(`${wallet.publicKey}`)}
-      <Identicon address={wallet.publicKey.toBase58()} />
+      <Identicon address={wallet.publicKey.toBase58()} style={{ marginLeft: '0.5rem' }} />
     </div>
   </div>;
 }
