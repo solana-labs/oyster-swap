@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useConnection } from './connection';
 import { useWallet } from './wallet';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
-import { programIds } from './ids';
+import { programIds, WRAPPED_SOL_MINT } from './ids';
 import { AccountLayout, u64, AccountInfo as TokenAccountInfo, MintInfo, MintLayout } from '@solana/spl-token';
 import { PoolInfo, usePools } from './pools';
 
@@ -128,24 +128,49 @@ export const getCachedAccount = (predicate: (account: TokenAccount) => boolean) 
   }
 }
 
+function wrapNativeAccount(pubkey: PublicKey, account?: AccountInfo<Buffer>): TokenAccount | undefined {
+  if(!account) {
+    return undefined;
+  }  
 
+  return {
+    pubkey: pubkey,
+    account,
+    info: {
+      mint: WRAPPED_SOL_MINT,
+      owner: pubkey,
+      amount: new u64(account.lamports),
+      delegate: null,
+      delegatedAmount: new u64(0),
+      isInitialized: true,
+      isFrozen: false,
+      isNative: true,
+      rentExemptReserve: null,
+      closeAuthority: null,
+    }
+  };
+
+}
 
 export function UserAccountsProvider({ children = null as any }) {
   const connection = useConnection();
   const { wallet, connected } = useWallet();
+  const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
   const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
   const { pools } = usePools();
 
-  const selectUserAccounts = () => {
-    const accounts = [...accountsCache.values()];
+  const selectUserAccounts = useCallback(() => {
+    return [...accountsCache.values()].filter((a) => a.info.owner.toBase58() === wallet.publicKey.toBase58());
+  }, [wallet]);
 
-    return accounts.filter((a: TokenAccount) => a.info.owner.toBase58() === wallet.publicKey.toBase58());
-  }
+  useEffect(() =>{
+    setUserAccounts([wrapNativeAccount(wallet.publicKey, nativeAccount), ...tokenAccounts].filter(a => a !== undefined) as TokenAccount[]);
+  }, [nativeAccount, tokenAccounts]);
 
   useEffect(() => {
     if (!connection || !wallet || !wallet.publicKey) {
-      setUserAccounts([]);
+      setTokenAccounts([]);
     } else {
       const queryTokenAccounts = async () => {
         // user accounts are update via ws subscription
@@ -169,7 +194,7 @@ export function UserAccountsProvider({ children = null as any }) {
         }).forEach(acc => {
           accountsCache.set(acc.pubkey.toBase58(), acc);
         })
-        setUserAccounts(selectUserAccounts());
+        setTokenAccounts(selectUserAccounts());
       }
 
       queryTokenAccounts();
@@ -180,7 +205,9 @@ export function UserAccountsProvider({ children = null as any }) {
         }
       })
       connection.onAccountChange(wallet.publicKey, (acc) => {
-        setNativeAccount(acc);
+        if(acc) {
+          setNativeAccount(acc);
+        }
       })
 
       // This can return different types of accounts: token-account, mint, multisig
@@ -202,7 +229,7 @@ export function UserAccountsProvider({ children = null as any }) {
 
           if (details.info.owner.toBase58() === wallet?.publicKey?.toBase58() || accountsCache.has(id)) {
             accountsCache.set(id, details);
-            setUserAccounts(selectUserAccounts());
+            setTokenAccounts(selectUserAccounts());
             accountEmitter.raiseAccountUpdated(id);   
           } 
         } else if (info.accountInfo.data.length === MintLayout.span) {
@@ -231,7 +258,7 @@ export function UserAccountsProvider({ children = null as any }) {
   return (
     <AccountsContext.Provider
       value={{
-        userAccounts: userAccounts,
+        userAccounts,
         pools,
         nativeAccount,
       }}

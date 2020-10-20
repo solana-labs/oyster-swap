@@ -21,7 +21,7 @@ interface KnownToken {
 
 const TokenIcon = (props:{ mintAddress: string, icon?: string }) => {
     if(props.icon) {
-        return <img key={props.mintAddress} width="20" height="20" src={props.icon} style={{ marginRight: '0.5rem', borderRadius: '1rem', backgroundColor: 'white' }} />
+        return <img key={props.mintAddress} width="20" height="20" src={props.icon} style={{ marginRight: '0.5rem', borderRadius: '1rem', backgroundColor: 'white', backgroundClip:'padding-box' }} />
     }
 
     return <Identicon address={props.mintAddress} style={{ marginRight: '0.5rem' }} />;
@@ -177,8 +177,6 @@ export const CurrencyInput = (props: {
                 dropdownMatchSelectWidth={true}
                 dropdownStyle={{ minWidth: 120 }} 
                 onChange={(item) => {
-                    // TODO: match mint to user account ...
-
                     setSelectedMint(item);
                     const userAccount = userAccounts?.find(a => a.info.mint.toBase58() === item);
                     if (props.onAccountChange && userAccount) {
