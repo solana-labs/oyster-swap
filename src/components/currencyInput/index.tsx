@@ -3,7 +3,7 @@ import { calculateDependentAmount, usePoolForBasket } from './../../utils/pools'
 import { Card, Select, } from 'antd';
 import { NumericInput } from './../numericInput';
 import { getTokenName, isKnownMint, KnownToken } from './../../utils/utils';
-import { useUserAccounts, useMint, useSelectedAccount } from './../../utils/accounts';
+import { useUserAccounts, useMint, useSelectedAccount, useAccountByMint } from './../../utils/accounts';
 import './styles.less';
 import { MintInfo } from '@solana/spl-token';
 import { useConnection, useConnectionConfig } from './../../utils/connection';
@@ -24,26 +24,26 @@ export const useCurrencyPairState = () => {
     const connection = useConnection();
     const [amountA, setAmountA] = useState("");
     const [amountB, setAmountB] = useState("");
-    const [addressA, setAddressA] = useState("");
-    const [addressB, setAddressB] = useState("");
+    const [mintAddressA, setMintAddressA] = useState("");
+    const [mintAddressB, setMintAddressB] = useState("");
     const [lastTypedAccount, setLastTypedAccount] = useState('');
-    const accountA = useSelectedAccount(addressA);
-    const accountB = useSelectedAccount(addressB);
-    const mintA = useMint(accountA && accountA.info.mint.toBase58());
-    const mintB = useMint(accountB && accountB.info.mint.toBase58());
-    const pool = usePoolForBasket([accountA?.info.mint.toBase58(), accountB?.info.mint.toBase58()]);
+    const accountA = useAccountByMint(mintAddressA);
+    const accountB = useAccountByMint(mintAddressB);
+    const mintA = useMint(mintAddressA);
+    const mintB = useMint(mintAddressB);
+    const pool = usePoolForBasket([mintAddressA, mintAddressB]);
 
     const calculateDependent = async () => {
-            if (pool && accountA && accountB) {
+            if (pool && mintAddressA && mintAddressB) {
                 let setDependent;
                 let amount;
                 let independent;
-                if (lastTypedAccount === addressA) {
-                    independent = accountA.info.mint.toBase58();
+                if (lastTypedAccount === mintAddressA) {
+                    independent = mintAddressA;
                     setDependent = setAmountB;
                     amount = parseFloat(amountA);
                 } else {
-                    independent = accountB.info.mint.toBase58();
+                    independent = mintAddressB;
                     setDependent = setAmountA;
                     amount = parseFloat(amountB);
                 }
@@ -65,21 +65,21 @@ export const useCurrencyPairState = () => {
 
     return {
         A: {
-            address: addressA,
+            mintAddress: mintAddressA,
             account: accountA,
             mint: mintA,
             amount: amountA,
             setAmount: setAmountA,
-            setAddress: setAddressA,
+            setMint: setMintAddressA,
             convertAmount: () => convertAmount(amountA, mintA),
         },
         B: {
-            address: addressB,
+            mintAddress: mintAddressB,
             account: accountB,
             mint: mintB,
             amount: amountB,
             setAmount: setAmountB,
-            setAddress: setAddressB,
+            setMint: setMintAddressB,
             convertAmount: () => convertAmount(amountB, mintB),
         },
         setLastTypedAccount,  
@@ -87,27 +87,16 @@ export const useCurrencyPairState = () => {
 }
 
 export const CurrencyInput = (props: {
-    account?: string,
+    mint?: string,
     amount?: string,
     title?: string,
     onInputChange?: (val: number) => void,
-    onAccountChange?: (account: string) => void,
+    onMintChange?: (account: string) => void,
 }) => {
     const { userAccounts } = useUserAccounts();
-    const [ selectedMint, setSelectedMint] = useState('');
-    const mint = useMint(selectedMint);
+    const mint = useMint(props.mint);
 
     const { env } = useConnectionConfig();
-
-    useEffect(() =>{
-        const currentAccount = userAccounts?.find(a => a.pubkey.toBase58() === props.account);
-        const currentMintAddress = currentAccount?.info.mint.toBase58();
-        //on account change find mint ...
-        if(selectedMint !== currentMintAddress && currentMintAddress) {
-            setSelectedMint(currentMintAddress);
-        }
-        
-    }, [props.account]);
 
     const tokens = PopularTokens[env] as KnownToken[];
 
@@ -135,7 +124,7 @@ export const CurrencyInput = (props: {
     });
 
     const userUiBalance = () => {
-        const currentAccount = userAccounts?.find(a => a.info.mint.toBase58() === selectedMint);
+        const currentAccount = userAccounts?.find(a => a.info.mint.toBase58() === props.mint);
         if(currentAccount && mint) {
             return currentAccount.info.amount.toNumber() / Math.pow(10, mint.decimals);
         }
@@ -158,14 +147,12 @@ export const CurrencyInput = (props: {
             }} style={{ fontSize: 20, boxShadow: 'none', borderColor: 'transparent', outline: 'transpaernt' }} placeholder="0.00" />
             
             <div className="ccy-input-header-right" style={{ display: 'felx' }}>
-                <Select size="large"  style={{ minWidth: 80 }} placeholder="CCY" value={selectedMint}  
+                <Select size="large"  style={{ minWidth: 80 }} placeholder="CCY" value={props.mint}  
                 dropdownMatchSelectWidth={true}
                 dropdownStyle={{ minWidth: 120 }} 
                 onChange={(item) => {
-                    setSelectedMint(item);
-                    const userAccount = userAccounts?.find(a => a.info.mint.toBase58() === item);
-                    if (props.onAccountChange && userAccount) {
-                        props.onAccountChange(userAccount.pubkey.toBase58());
+                    if (props.onMintChange) {
+                        props.onMintChange(item);
                     }
                 }}>{[...renderPopularTokens, ...renderAdditionalTokens]}</Select>
             </div>

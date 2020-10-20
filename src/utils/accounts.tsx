@@ -364,6 +364,18 @@ export const useSelectedAccount = (account: string) => {
   return;
 }
 
+export const useAccountByMint = (mint: string) => {
+  const { userAccounts } = useUserAccounts();
+  const index = userAccounts.findIndex(acc => acc.info.mint.toBase58() === mint);
+
+  if (index !== -1) {
+    return userAccounts[index];
+  }
+
+  return;
+}
+
+
 // TODO: expose in spl package
 const deserializeAccount = (data: Buffer) => {
   const accountInfo = AccountLayout.decode(data);

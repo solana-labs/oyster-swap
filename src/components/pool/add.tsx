@@ -16,7 +16,7 @@ export const AddToLiquidity = () => {
     const connection = useConnection();
     const [pendingTx, setPendingTx] = useState(false);
     const { A, B, setLastTypedAccount } = useCurrencyPairState();
-    const pool = usePoolForBasket([A?.account?.info.mint.toBase58(), B?.account?.info.mint.toBase58()]);
+    const pool = usePoolForBasket([A?.mintAddress, B?.mintAddress]);
 
     const provideLiquidity = async () => {
         if (A.account && B.account && A.mint && B.mint) {
@@ -58,15 +58,15 @@ export const AddToLiquidity = () => {
             title="Input"
             onInputChange={(val: any) => {
                 if (A.amount !== val) {
-                    setLastTypedAccount(A.address);
+                    setLastTypedAccount(A.mintAddress);
                 }
 
                 A.setAmount(val);
             }} 
             amount={A.amount}
-            account={A.address}
-            onAccountChange={(item) => {
-                A.setAddress(item);
+            mint={A.mintAddress}
+            onMintChange={(item) => {
+                A.setMint(item);
             }}
         />
         <div>+</div>
@@ -74,15 +74,15 @@ export const AddToLiquidity = () => {
             title="Input"
             onInputChange={(val: any) => {
                 if (B.amount !== val) {
-                    setLastTypedAccount(B.address);
+                    setLastTypedAccount(B.mintAddress);
                 }
 
                 B.setAmount(val);
             }} 
             amount={B.amount}
-            account={B.address}
-            onAccountChange={(item) => {
-                B.setAddress(item);
+            mint={B.mintAddress}
+            onMintChange={(item) => {
+                B.setMint(item);
             }}
         />
         {pool && <SupplyOverview pool={pool} />}
