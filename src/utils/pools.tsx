@@ -174,7 +174,7 @@ export const removeLiquidity = async (connection: Connection, wallet: any, liqui
     });
 };
 
-export const swap = async (connection: Connection, wallet: any, components: LiquidityComponent[], pool?: PoolInfo) => {
+export const swap = async (connection: Connection, wallet: any, components: LiquidityComponent[], SLIPPAGE: number, pool?: PoolInfo) => {
     if (!pool) {
         notify({
             type: 'error',
@@ -183,9 +183,6 @@ export const swap = async (connection: Connection, wallet: any, components: Liqu
         })
         return;
     }
-
-
-    const SLIPPAGE = 1 // 1% TODO: customize for now 100% for demo purpose
 
     // Uniswap whitepaper: https://uniswap.org/whitepaper.pdf       
     // see: https://uniswap.org/docs/v2/advanced-topics/pricing/
@@ -264,12 +261,11 @@ export const swap = async (connection: Connection, wallet: any, components: Liqu
     });
 };
 
-export const addLiquidity = async (connection: Connection, wallet: any, components: LiquidityComponent[], pool?: PoolInfo) => {
-    // TODO check if any of the accounts is native and needs to be wrapped?
+export const addLiquidity = async (connection: Connection, wallet: any, components: LiquidityComponent[], slippage: number, pool?: PoolInfo) => {
     if (!pool) {
         await _addLiquidityNewPool(wallet, connection, components);
     } else {
-        await _addLiquidityExistingPool(pool, components, connection, wallet);
+        await _addLiquidityExistingPool(pool, components, connection, wallet, slippage);
     }
 }
 
@@ -394,7 +390,7 @@ export const useOwnedPools = () => {
     });
 };
 
-async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityComponent[], connection: Connection, wallet: any) {
+async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityComponent[], connection: Connection, wallet: any, SLIPPAGE: number) {
     notify({
         message: 'Adding Liquidity...',
         description: 'Please review transactions to approve.',
@@ -417,7 +413,6 @@ async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityCo
 
 
     const supply = poolMint.supply.toNumber();
-    const SLIPPAGE = 0.01; // 1% TODO: customize
     const authority = poolMint.mintAuthority;
 
     // Uniswap whitepaper: https://uniswap.org/whitepaper.pdf       

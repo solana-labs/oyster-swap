@@ -16,20 +16,25 @@ export const ENDPOINTS = [
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT_SLIPPAGE = 1.0; // TODO: set to lower value
 
 interface ConnectionConfig {
   connection: Connection;
   sendConnection: Connection;
   endpoint: string;
+  slippage: number,
+  setSlippage: (val: number) => void,
   env: ENV;
   setEndpoint: (val: string) => void;
 }
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
+  setEndpoint: () => {},
+  slippage: DEFAULT_SLIPPAGE, 
+  setSlippage: (val: number) => {},
   connection:  new Connection(DEFAULT, 'recent'),
   sendConnection:  new Connection(DEFAULT, 'recent'),
-  setEndpoint: () => {},
   env: ENDPOINTS[0].name
 });
 
@@ -37,6 +42,11 @@ export function ConnectionProvider({ children = undefined as any }) {
   const [endpoint, setEndpoint] = useLocalStorageState(
     'connectionEndpts',
     ENDPOINTS[0].endpoint,
+  );
+
+  const [slippage, setSlippage] = useLocalStorageState(
+    'slippage',
+    DEFAULT_SLIPPAGE.toString(),
   );
 
   const connection = useMemo(() => new Connection(endpoint, 'recent'), [
@@ -86,7 +96,11 @@ export function ConnectionProvider({ children = undefined as any }) {
 
   return (
     <ConnectionContext.Provider
-      value={{ endpoint, setEndpoint, connection, sendConnection, env }}
+      value={{ 
+        endpoint, setEndpoint, 
+        slippage: parseFloat(slippage), 
+        setSlippage: (val) => setSlippage(val.toString()),
+        connection, sendConnection, env }}
     >
       {children}
     </ConnectionContext.Provider>
@@ -105,4 +119,9 @@ export function useSendConnection() {
 export function useConnectionConfig() {
   const context = useContext(ConnectionContext);
   return { endpoint: context.endpoint, setEndpoint: context.setEndpoint, env: context.env };
+}
+
+export function useSlippageConfig() {
+  const { slippage, setSlippage } = useContext(ConnectionContext);
+  return { slippage, setSlippage };
 }

@@ -1,6 +1,6 @@
 import { Button, Spin } from 'antd';
 import React, { useState } from 'react';
-import { useConnection } from '../../utils/connection';
+import { useConnection, useSlippageConfig } from '../../utils/connection';
 import { useWallet } from '../../utils/wallet';
 import { CurrencyInput, useCurrencyPairState } from './../currencyInput';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -19,6 +19,7 @@ export const TradeEntry = () => {
     const [pendingTx, setPendingTx] = useState(false);
     const { A, B, setLastTypedAccount } = useCurrencyPairState();
     const pool = usePoolForBasket([A?.mintAddress, B?.mintAddress]);
+    const { slippage } = useSlippageConfig();
 
     const swapAccounts = () => {
         const tempMint = A.mintAddress;
@@ -45,7 +46,7 @@ export const TradeEntry = () => {
                     }
                 ];
 
-                await swap(connection, wallet, components, pool);
+                await swap(connection, wallet, components, slippage, pool);
 
             } catch {
                 notify({

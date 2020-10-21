@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { addLiquidity, usePoolForBasket } from '../../utils/pools';
 import { Button, Popover } from 'antd';
 import { useWallet } from '../../utils/wallet';
-import { useConnection } from '../../utils/connection';
+import { useConnection, useSlippageConfig } from '../../utils/connection';
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
@@ -17,6 +17,7 @@ export const AddToLiquidity = () => {
     const [pendingTx, setPendingTx] = useState(false);
     const { A, B, setLastTypedAccount } = useCurrencyPairState();
     const pool = usePoolForBasket([A?.mintAddress, B?.mintAddress]);
+    const { slippage } = useSlippageConfig();
 
     const provideLiquidity = async () => {
         if (A.account && B.account && A.mint && B.mint) {
@@ -32,7 +33,7 @@ export const AddToLiquidity = () => {
                 }
             ];
 
-            addLiquidity(connection, wallet, components, pool).then(() => {
+            addLiquidity(connection, wallet, components, slippage, pool).then(() => {
                 setPendingTx(false);
             }).catch(() => {
                 notify({

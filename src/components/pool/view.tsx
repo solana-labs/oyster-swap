@@ -5,8 +5,10 @@ import {RemoveLiquidity} from './remove';
 import { getPoolName } from '../../utils/utils';
 import { useMint } from '../../utils/accounts';
 import { useConnectionConfig } from '../../utils/connection';
+import { TokenIcon } from '../tokenIcon';
+import { PoolInfo, TokenAccount } from '../../models';
 
-const PoolItem = (props: { item: any }) => {
+const PoolItem = (props: { item: { pool: PoolInfo, account: TokenAccount } }) => {
     const { env } = useConnectionConfig();
     const item = props.item;
     const mint = useMint(item.account.info.mint.toBase58());
@@ -17,6 +19,8 @@ const PoolItem = (props: { item: any }) => {
         return null;
     }
 
+    const sorted = item.pool.pubkeys.accountMints.map(a => a.toBase58()).sort();
+
     if (item) {
         return <List.Item
             actions={[
@@ -24,7 +28,9 @@ const PoolItem = (props: { item: any }) => {
             ]}
         >
             <div>{amount.toFixed(2)}</div>
-            <div style={{marginLeft: 10  } }>{getPoolName(env, item.pool)}</div>
+            <TokenIcon mintAddress={sorted[0]} style={{ marginRight: '-0.5rem', marginLeft: '0.5rem' }} />
+            <TokenIcon mintAddress={sorted[1]} />
+            <div>{getPoolName(env, item.pool)}</div>
         </List.Item>;
     }
 

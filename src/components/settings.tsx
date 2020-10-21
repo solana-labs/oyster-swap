@@ -1,48 +1,62 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Select } from 'antd';
-import { ENDPOINTS, useConnectionConfig } from '../utils/connection';
+import { ENDPOINTS, useConnectionConfig, useSlippageConfig } from '../utils/connection';
 import { useWallet, WALLET_PROVIDERS } from '../utils/wallet';
 import { NumericInput } from './numericInput';
 
 const Slippage = (props: {}) => {
-  const [value, setValue] = useState<number>();
-  const [manualValue, setManualValue] = useState('');
+  const { slippage, setSlippage } = useSlippageConfig();
+  const slippagePct = slippage * 100;
+  const [value, setValue] = useState(slippagePct.toString());
+
+  useEffect(() => {
+    setValue(slippagePct.toString());
+  }, [slippage]);
 
   const isSelected = (val: number) => {
-    return val === value ? 'primary' : 'default';
+    return val === slippagePct ? 'primary' : 'default';
   }
 
-  const itemStyle: React.CSSProperties ={
+  const itemStyle: React.CSSProperties = {
     margin: 5
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
       {[0.1, 0.5, 1.0].map(item => {
-        return <Button key={item.toString()} style={itemStyle} type={isSelected(item)} onClick={() => setValue(item)} >{item}%</Button>
+        return <Button key={item.toString()} style={itemStyle} type={isSelected(item)} onClick={() => setSlippage(item / 100.0)} >{item}%</Button>
       })}
-      <NumericInput className="slippage-input" size="small" placeholder={value} value={manualValue} 
-                    style={{ width: 200, fontSize: 20, boxShadow: 'none', borderColor: 'transparent', outline: 'transpaernt' }}
-                    onChange={(x: any) => setManualValue(x)} />%
+      <div style={{ padding: '3px 10px 3px 3px', border: '1px solid #434343' }}>
+        <NumericInput className="slippage-input" size="small" placeholder={value} value={value}
+          style={{ width: 50, fontSize: 14, boxShadow: 'none', borderColor: 'transparent', outline: 'transpaernt' }}
+          onChange={(x: any) => {
+            setValue(x);
+            const newValue = parseFloat(x) / 100.0;
+            if(Number.isFinite(newValue)){
+              setSlippage(newValue);
+            } 
+          }} />%
+      </div>
     </div>
   )
 }
 
 export const Settings = () => {
-    const { providerUrl, setProvider } = useWallet();
-    const { endpoint, setEndpoint } = useConnectionConfig();
+  const { providerUrl, setProvider } = useWallet();
+  const { endpoint, setEndpoint } = useConnectionConfig();
 
-    return <>
-        <div>
-          
-          <div>
-            Transactions: Settings:
+  return <>
+    <div>
+      Transactions: Settings:
             <div>
-              Slippage:
+        Slippage:
               <Slippage />
-            </div>
+      </div>
 
-          </div>
+    </div>
+    <div style={{ display: 'grid' }}>
+
+
 
       Network: <Select
         onSelect={setEndpoint}
@@ -56,7 +70,7 @@ export const Settings = () => {
         ))}
       </Select>
     </div>
-    <div>
+    <div style={{ display: 'grid' }}>
       Wallet: <Select onSelect={setProvider} value={providerUrl}>
         {WALLET_PROVIDERS.map(({ name, url }) => (
           <Select.Option value={url} key={url}>
@@ -65,5 +79,5 @@ export const Settings = () => {
         ))}
       </Select>
     </div>
-    </>;
+  </>;
 }

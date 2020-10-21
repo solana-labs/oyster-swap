@@ -7,18 +7,10 @@ import { useUserAccounts, useMint, useSelectedAccount, useAccountByMint } from '
 import './styles.less';
 import { MintInfo } from '@solana/spl-token';
 import { useConnection, useConnectionConfig } from './../../utils/connection';
-import { Identicon } from './../identicon';
+import { TokenIcon } from './../tokenIcon';
 import PopularTokens from './../../utils/token-list.json';
 
 const { Option } = Select;
-
-const TokenIcon = (props:{ mintAddress: string, icon?: string }) => {
-    if(props.icon) {
-        return <img key={props.mintAddress} width="20" height="20" src={props.icon} style={{ marginRight: '0.5rem', borderRadius: '1rem', backgroundColor: 'white', backgroundClip:'padding-box' }} />
-    }
-
-    return <Identicon address={props.mintAddress} style={{ marginRight: '0.5rem' }} />;
-}
 
 export const useCurrencyPairState = () => {
     const connection = useConnection();
@@ -105,7 +97,7 @@ export const CurrencyInput = (props: {
     const renderPopularTokens = tokens.map(item => {
         return <Option value={item.mintAddress} title={item.mintAddress}>
             <div key={item.mintAddress} style={{ display: 'flex', alignItems: 'center' }} >
-                <TokenIcon mintAddress={item.mintAddress} icon={item.icon} />
+                <TokenIcon mintAddress={item.mintAddress} />
                 {item.tokenSymbol}
             </div>
         </Option>

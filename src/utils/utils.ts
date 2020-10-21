@@ -69,9 +69,13 @@ export function getTokenName(env: ENV, mintAddress: string): string {
   return shortenAddress(mintAddress).substring(10).toUpperCase();
 }
 
+export function getTokenIcon(env: ENV, mintAddress: string): string | undefined {
+  return AddressToToken.get(env)?.get(mintAddress)?.icon;
+}
+
 export function getPoolName(env: ENV, pool: PoolInfo) {
-  const sorted = [...pool.pubkeys.accountMints].sort();
-  return sorted.map(item => getTokenName(env, item.toBase58())).join('/');
+  const sorted = pool.pubkeys.accountMints.map(a => a.toBase58()).sort();
+  return sorted.map(item => getTokenName(env, item)).join('/');
 }
 
 export function isKnownMint(env: ENV, mintAddress: string) {
@@ -84,5 +88,5 @@ export function formatTokenAmount(account?: TokenAccount, mint?: MintInfo): stri
   }
 
   const precision = Math.pow(10, (mint?.decimals || 0));
-  return (account.info.amount?.toNumber() / precision)?.toString();
+  return (account.info.amount?.toNumber() / precision)?.toFixed(2);
 }
