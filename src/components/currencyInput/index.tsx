@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { calculateDependentAmount, usePoolForBasket } from './../../utils/pools';
+import { calculateDependentAmount, useOwnedPools, usePoolForBasket } from './../../utils/pools';
 import { Card, Select, } from 'antd';
 import { NumericInput } from './../numericInput';
-import { getTokenName, isKnownMint, KnownToken } from './../../utils/utils';
+import { getPoolName, getTokenName, isKnownMint, KnownToken } from './../../utils/utils';
 import { useUserAccounts, useMint, useSelectedAccount, useAccountByMint } from './../../utils/accounts';
 import './styles.less';
 import { MintInfo } from '@solana/spl-token';
 import { useConnection, useConnectionConfig } from './../../utils/connection';
-import { TokenIcon } from './../tokenIcon';
+import { PoolIcon, TokenIcon } from './../tokenIcon';
 import PopularTokens from './../../utils/token-list.json';
 
 const { Option } = Select;
@@ -88,6 +88,7 @@ export const CurrencyInput = (props: {
     onMintChange?: (account: string) => void,
 }) => {
     const { userAccounts } = useUserAccounts();
+    const pools = useOwnedPools();
     const mint = useMint(props.mint);
 
     const { env } = useConnectionConfig();
@@ -109,10 +110,24 @@ export const CurrencyInput = (props: {
             return null;
         }
 
+        const instance = pools.find(p => p.account === account);
+
+        let name: string;
+        let icon: JSX.Element;
+        if(instance) {
+            name = getPoolName(env, instance.pool);
+
+            const sorted = instance.pool.pubkeys.accountMints.map(a => a.toBase58()).sort();
+            icon = <PoolIcon mintA={sorted[0]} mintB={sorted[1]} />;
+        } else {
+            name = getTokenName(env, mint);
+            icon = <TokenIcon mintAddress={mint} />;
+        }
+
         return <Option value={mint} title={mint}>
-            <div key={mint} style={{ display: 'flex', alignItems: 'center', opacity: 0.6 }} >
-                <TokenIcon mintAddress={mint} />
-                {getTokenName(env, mint)}
+            <div key={mint} style={{ display: 'flex', alignItems: 'center' }} >
+                {icon}
+                {name}
             </div>
         </Option>
     });
@@ -143,7 +158,7 @@ export const CurrencyInput = (props: {
             <div className="ccy-input-header-right" style={{ display: 'felx' }}>
                 <Select size="large"  style={{ minWidth: 80 }} placeholder="CCY" value={props.mint}  
                 dropdownMatchSelectWidth={true}
-                dropdownStyle={{ minWidth: 120 }} 
+                dropdownStyle={{ minWidth: 200 }} 
                 onChange={(item) => {
                     if (props.onMintChange) {
                         props.onMintChange(item);

@@ -24,3 +24,10 @@ export const TokenIcon = (props: { mintAddress: string, style?: React.CSSPropert
 
     return <Identicon address={props.mintAddress} style={{ marginRight: '0.5rem' }} />;
 }
+
+export const PoolIcon = (props: { mintA: string, mintB: string, style?: React.CSSProperties }) => {
+    return <div>
+            <TokenIcon mintAddress={props.mintA} style={{ marginRight: '-0.5rem', ...props.style }} />
+            <TokenIcon mintAddress={props.mintB} />
+        </div>
+}
