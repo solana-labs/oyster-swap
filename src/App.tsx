@@ -81,7 +81,7 @@ function App() {
     <div className="App">
       <div className="Banner">
         <div className="Banner-description">
-          Swap on Solana is beta software. Use it at your own risk.
+            Swap on Solana is unaudited demo software. Use at your own risk
             <Info style={{ color: 'black' }} text={
             <span>
               Any content produced by Solana, or developer resources that Solana provides, are for educational and inspiration purposes only.

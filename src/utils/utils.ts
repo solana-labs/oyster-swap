@@ -70,7 +70,7 @@ export function getTokenName(env: ENV, mintAddress: string): string {
 }
 
 export function getPoolName(env: ENV, pool: PoolInfo) {
-  const sorted = pool.pubkeys.accountMints.sort();
+  const sorted = [...pool.pubkeys.accountMints].sort();
   return sorted.map(item => getTokenName(env, item.toBase58())).join('/');
 }
 

@@ -371,7 +371,7 @@ export const usePools = () => {
 
 export const usePoolForBasket = (mints: (string | undefined)[]) => {
     const { pools } = useCachedPool();
-    const sortedMints = mints.sort();
+    const sortedMints = [...mints].sort();
 
     return pools.find(p => p.pubkeys.accountMints.map(a => a.toBase58()).sort().every((address, i) => address === sortedMints[i]));
 }

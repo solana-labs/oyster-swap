@@ -49,8 +49,10 @@ export const useCurrencyPairState = () => {
                 }
     
                 const result = await calculateDependentAmount(connection, independent, amount, pool);
-                if (result !== undefined) {
+                if (result !== undefined && Number.isFinite(result)) {
                     setDependent(result.toFixed(2));
+                } else {
+                    setDependent('');
                 }
             }
         };
