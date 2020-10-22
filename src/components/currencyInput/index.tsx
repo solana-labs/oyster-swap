@@ -117,7 +117,7 @@ export const CurrencyInput = (props: {
         if(instance) {
             name = getPoolName(env, instance.pool);
 
-            const sorted = instance.pool.pubkeys.accountMints.map(a => a.toBase58()).sort();
+            const sorted = instance.pool.pubkeys.holdingMints.map(a => a.toBase58()).sort();
             icon = <PoolIcon mintA={sorted[0]} mintB={sorted[1]} />;
         } else {
             name = getTokenName(env, mint);

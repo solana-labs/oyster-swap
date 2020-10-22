@@ -74,7 +74,7 @@ export function getTokenIcon(env: ENV, mintAddress: string): string | undefined 
 }
 
 export function getPoolName(env: ENV, pool: PoolInfo) {
-  const sorted = pool.pubkeys.accountMints.map(a => a.toBase58()).sort();
+  const sorted = pool.pubkeys.holdingMints.map(a => a.toBase58()).sort();
   return sorted.map(item => getTokenName(env, item)).join('/');
 }
 

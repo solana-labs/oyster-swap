@@ -80,7 +80,7 @@ export const TradeEntry = () => {
             />
             <Button type="text" onClick={swapAccounts}>↓</Button>
             <CurrencyInput
-                title="To"
+                title="To (Estimate)"
                 onInputChange={(val: any) => {
                     if (B.amount !== val) {
                         setLastTypedAccount(B.mintAddress);

@@ -3,7 +3,7 @@ import { useConnection } from './connection';
 import { useWallet } from './wallet';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { programIds, WRAPPED_SOL_MINT } from './ids';
-import { AccountLayout, u64, AccountInfo as TokenAccountInfo, MintInfo, MintLayout } from '@solana/spl-token';
+import { AccountLayout, u64, MintInfo, MintLayout } from '@solana/spl-token';
 import { usePools } from './pools';
 import { TokenAccount, PoolInfo } from './../models'
 
@@ -420,7 +420,7 @@ const deserializeMint = (data: Buffer) => {
   }
 
   mintInfo.supply = u64.fromBuffer(mintInfo.supply);
-  mintInfo.isInitialized = mintInfo.isInitialized != 0;
+  mintInfo.isInitialized = mintInfo.isInitialized !== 0;
 
   if (mintInfo.freezeAuthorityOption === 0) {
     mintInfo.freezeAuthority = null;

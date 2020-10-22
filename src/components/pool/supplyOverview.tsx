@@ -22,13 +22,15 @@ const renderCustomizedLabel = (props: any, data: any) => {
   );
 };
 
+// TODO: add imbalance overview based on serum mid-price
+
 export const SupplyOverview = (props: { pool?: PoolInfo }) => {
     const { pool } = props;
     const connection = useConnection();
-    const mintA = useMint(pool?.pubkeys.accountMints[0].toBase58());
-    const mintB = useMint(pool?.pubkeys.accountMints[1].toBase58());
-    const accountA = useAccount(pool?.pubkeys.accounts[0]);
-    const accountB = useAccount(pool?.pubkeys.accounts[1]);
+    const mintA = useMint(pool?.pubkeys.holdingMints[0].toBase58());
+    const mintB = useMint(pool?.pubkeys.holdingMints[1].toBase58());
+    const accountA = useAccount(pool?.pubkeys.holdingAccounts[0]);
+    const accountB = useAccount(pool?.pubkeys.holdingAccounts[1]);
     const { env } = useConnectionConfig();
     const [data, setData] = useState<{ name: string, value: number, color: string }[]>([]);
     
@@ -40,18 +42,18 @@ export const SupplyOverview = (props: { pool?: PoolInfo }) => {
         (async () => {
             const bConvertedToA = await calculateDependentAmount(
                 connection, 
-                pool?.pubkeys.accountMints[1].toBase58(), 
+                pool?.pubkeys.holdingMints[1].toBase58(), 
                 (accountB?.info.amount.toNumber() / Math.pow(10, (mintB?.decimals || 0))), 
                 pool);
 
                 let chart = [
                     {
-                        name: getTokenName(env, pool?.pubkeys.accountMints[0].toBase58()),
+                        name: getTokenName(env, pool?.pubkeys.holdingMints[0].toBase58()),
                         value: accountA?.info.amount?.toNumber() / Math.pow(10, (mintA?.decimals || 0)),
                         color: '#6610f2'
                     },
                     {
-                        name: getTokenName(env, pool?.pubkeys.accountMints[1].toBase58()),
+                        name: getTokenName(env, pool?.pubkeys.holdingMints[1].toBase58()),
                         value: bConvertedToA || 0, // TODO: convert to A using ratio from the pool
                         color: '#d83aeb'
                     }

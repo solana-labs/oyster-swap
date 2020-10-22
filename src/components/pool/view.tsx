@@ -19,7 +19,7 @@ const PoolItem = (props: { item: { pool: PoolInfo, account: TokenAccount } }) =>
         return null;
     }
 
-    const sorted = item.pool.pubkeys.accountMints.map(a => a.toBase58()).sort();
+    const sorted = item.pool.pubkeys.holdingMints.map(a => a.toBase58()).sort();
 
     if (item) {
         return <List.Item
@@ -28,7 +28,7 @@ const PoolItem = (props: { item: { pool: PoolInfo, account: TokenAccount } }) =>
             ]}
         >
             <div>{amount.toFixed(2)}</div>
-            <PoolIcon mintA={sorted[0]} mintB={sorted[1]} style={{ marginLeft: '0.5rem' }} />
+            {/* <PoolIcon mintA={sorted[0]} mintB={sorted[1]} style={{ marginLeft: '0.5rem' }} /> */}
             <div>{getPoolName(env, item.pool)}</div>
         </List.Item>;
     }

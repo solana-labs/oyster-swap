@@ -4,10 +4,13 @@ import { TokenAccount } from "./account";
 export interface PoolInfo {
     pubkeys: {
         program: PublicKey;
-        accounts: PublicKey[];
-        accountMints: PublicKey[];
+        account: PublicKey;
+        holdingAccounts: PublicKey[];
+        holdingMints: PublicKey[];
         mint: PublicKey;
+        feeAccount?: PublicKey;
     };
+    legacy: boolean;
     raw: any;
 }
 
