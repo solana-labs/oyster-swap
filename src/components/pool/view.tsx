@@ -7,8 +7,9 @@ import { useMint } from '../../utils/accounts';
 import { useConnectionConfig } from '../../utils/connection';
 import { PoolIcon, TokenIcon } from '../tokenIcon';
 import { PoolInfo, TokenAccount } from '../../models';
+import './view.less';
 
-const PoolItem = (props: { item: { pool: PoolInfo, account: TokenAccount } }) => {
+const PoolItem = (props: { item: { pool: PoolInfo, isFeeAccount: boolean, account: TokenAccount } }) => {
     const { env } = useConnectionConfig();
     const item = props.item;
     const mint = useMint(item.account.info.mint.toBase58());
@@ -22,15 +23,13 @@ const PoolItem = (props: { item: { pool: PoolInfo, account: TokenAccount } }) =>
     const sorted = item.pool.pubkeys.holdingMints.map(a => a.toBase58()).sort();
 
     if (item) {
-        return <List.Item
-            actions={[
-                <RemoveLiquidity instance={item} />
-            ]}
-        >
+        return <>
             <div>{amount.toFixed(4)}</div>
+            <span>{ item.isFeeAccount ? ' (F) ' : ' ' }</span>
             {sorted.length > 1 && <PoolIcon mintA={sorted[0]} mintB={sorted[1]} style={{ marginLeft: '0.5rem' }} /> }
             <div>{getPoolName(env, item.pool)}</div>
-        </List.Item>;
+            <RemoveLiquidity instance={item} />
+        </>;
     }
 
     return null;
@@ -45,11 +44,9 @@ export const PoolAccounts = () => {
         </div>
 
         <ConfigProvider renderEmpty={() => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No liquidity found." />}>
-            <List
-                size="small"
-                dataSource={pools}
-                renderItem={item  => <PoolItem item={item} />}
-            />
+            <div className="pools-grid">
+                {pools.map(p => <PoolItem item={p as any} />)}
+            </div>
         </ConfigProvider>
     </>;
 }

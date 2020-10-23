@@ -6,6 +6,7 @@ import { programIds, WRAPPED_SOL_MINT } from './ids';
 import { AccountLayout, u64, MintInfo, MintLayout } from '@solana/spl-token';
 import { usePools } from './pools';
 import { TokenAccount, PoolInfo } from './../models'
+import { notify } from './notifications';
 
 const AccountsContext = React.createContext<any>(null);
 
@@ -276,7 +277,10 @@ export function useMint(id?: string) {
   useEffect(() => {
     if (!id) { return }
 
-    cache.getMint(connection, id).then(setMint);
+    cache.getMint(connection, id).then(setMint).catch(err => notify({
+      message: err.message,
+      type: 'error'
+    }));
     const onAccountEvent = (e: Event) => {
       const event = e as AccountUpdateEvent;
       if(event.id === id) {
@@ -311,7 +315,10 @@ export function useAccount(pubKey?: PublicKey) {
           return;
         }
 
-        const acc = await cache.getAccount(connection, pubKey);
+        const acc = await cache.getAccount(connection, pubKey).catch(err => notify({
+          message: err.message,
+          type: 'error'
+        }));
         if (acc) {
           setAccount(acc);
         }

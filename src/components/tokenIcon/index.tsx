@@ -15,6 +15,7 @@ export const TokenIcon = (props: { mintAddress: string, style?: React.CSSPropert
             src={icon}
             style={{
                 marginRight: '0.5rem',
+                marginTop: '0.11rem',
                 borderRadius: '1rem',
                 backgroundColor: 'white',
                 backgroundClip: 'padding-box',

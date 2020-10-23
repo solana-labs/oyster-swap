@@ -32,6 +32,6 @@ export const RemoveLiquidity = (props: { instance: { account: TokenAccount, pool
     };
 
     return <>
-        <Button type="primary" onClick={onRemove} disabled={pendingTx}>Remove</Button>
+        <Button type="default" onClick={onRemove} disabled={pendingTx}>Remove</Button>
     </>;
 }

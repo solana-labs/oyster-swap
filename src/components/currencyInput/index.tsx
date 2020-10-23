@@ -105,7 +105,10 @@ export const CurrencyInput = (props: {
         </Option>
     });
 
-    const renderAdditionalTokens = userAccounts.map(account => {
+    // TODO: group multple accounts of same time and select one with max amount
+    const renderAdditionalTokens = userAccounts.sort((a, b) => {
+        return a.info.amount.toNumber() - b.info.amount.toNumber();
+    }).map(account => {
         const mint = account.info.mint.toBase58();
         if(isKnownMint(env, mint)) {
             return null;

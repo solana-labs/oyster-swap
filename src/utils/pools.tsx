@@ -1,11 +1,11 @@
-import { Account, Connection, PublicKey, sendAndConfirmRawTransaction, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { useConnection, useConnectionConfig } from "./connection";
+import { Account, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { useConnection } from "./connection";
 import { useEffect, useState } from "react";
 import { Token, MintLayout, AccountLayout } from '@solana/spl-token';
 import { notify } from "./notifications";
 import { cache, getCachedAccount, useUserAccounts, useCachedPool } from "./accounts";
 import { programIds, WRAPPED_SOL_MINT } from './ids';
-import { LiquidityComponent, PoolInfo, TokenAccount, createInitSwapInstruction, TokenSwap, TokenSwapLayout, depositInstruction, withdrawInstruction, TokenSwapLayoutLegacyV0, swapInstruction } from './../models';
+import { LiquidityComponent, PoolInfo, TokenAccount, createInitSwapInstruction, TokenSwap, TokenSwapLayout, depositInstruction, withdrawInstruction, TokenSwapLayoutLegacyV0, swapInstruction, PoolConfig } from './../models';
 
 const LIQUIDITY_TOKEN_PRECISION = 8;
 
@@ -234,9 +234,15 @@ export const swap = async (connection: Connection, wallet: any, components: Liqu
     });
 };
 
-export const addLiquidity = async (connection: Connection, wallet: any, components: LiquidityComponent[], slippage: number, pool?: PoolInfo) => {
+export const addLiquidity = async (connection: Connection, wallet: any, components: LiquidityComponent[], slippage: number, pool?: PoolInfo, options?: PoolConfig) => {
     if (!pool) {
-        await _addLiquidityNewPool(wallet, connection, components);
+        if(!options) {
+            throw new Error('Options are required to create new pool.');
+        }
+
+        console.log(options);
+        
+        await _addLiquidityNewPool(wallet, connection, components, options);
     } else {
         await _addLiquidityExistingPool(pool, components, connection, wallet, slippage);
     }
@@ -392,9 +398,11 @@ export const useOwnedPools = () => {
     }, new Map<string, TokenAccount[]>())
 
     return pools.filter(p => map.has(p.pubkeys.mint.toBase58())).map(item => {
+        let feeAccount = item.pubkeys.feeAccount?.toBase58() 
         return map.get(item.pubkeys.mint.toBase58())?.map(a => {
             return {
                 account: a as TokenAccount,
+                isFeeAccount: feeAccount === a.pubkey.toBase58(),
                 pool: item,
             };
         });
@@ -581,7 +589,7 @@ export async function calculateDependentAmount(connection: Connection, independe
 }
 
 // TODO: add ui to customize curve type
-async function _addLiquidityNewPool(wallet: any, connection: Connection, components: LiquidityComponent[], curveType: number = 0) {
+async function _addLiquidityNewPool(wallet: any, connection: Connection, components: LiquidityComponent[], options: PoolConfig) {
     notify({
         message: 'Creating new pool...',
         description: 'Please review transactions to approve.',
@@ -715,9 +723,9 @@ async function _addLiquidityNewPool(wallet: any, connection: Connection, compone
         programIds().token,
         programIds().swap,
         nonce,
-        curveType,
-        feeNumerator,
-        feeDenominator,
+        options.curveType,
+        options.tradeFeeNumerator,
+        options.tradeFeeDenominator,
         tradeFeeNumerator,
         tradeFeeDenominator,
         0, 
