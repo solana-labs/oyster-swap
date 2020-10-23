@@ -61,7 +61,7 @@ export const SupplyOverview = (props: { pool?: PoolInfo }) => {
 
                 setData(chart);
         })();
-    }, [accountA, accountB, mintA, mintB])
+    }, [accountA, accountB, mintA, mintB, connection, env, pool])
 
     if (!pool || !accountA || !accountB || data.length < 1 ) {
         return null;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { addLiquidity, usePoolForBasket } from '../../utils/pools';
-import { Button, Card, Dropdown, Menu, Popover, Select } from 'antd';
+import { Button, Dropdown, Popover } from 'antd';
 import { useWallet } from '../../utils/wallet';
 import { useConnection, useSlippageConfig } from '../../utils/connection';
 import { Spin } from 'antd';
@@ -106,7 +106,7 @@ export const AddToLiquidity = () => {
             onClick={provideLiquidity}
             disabled={pendingTx || !A.account || !B.account || A.account === B.account}>
             Provide Liquidity
-            {pendingTx && <Spin indicator={antIcon} />}
+            {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
         </Button>}
         {!pool && <Dropdown.Button
             className="add-button"
@@ -114,6 +114,9 @@ export const AddToLiquidity = () => {
             disabled={pendingTx || !A.account || !B.account || A.account === B.account}
             type="primary"
             size="large"
-            overlay={<PoolConfigCard options={options} setOptions={setOptions} />}>Create Liquidity Pool</Dropdown.Button>}
+            overlay={<PoolConfigCard options={options} setOptions={setOptions} />}>
+                Create Liquidity Pool
+                {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+            </Dropdown.Button>}
     </div>;
 };

@@ -6,6 +6,7 @@ import { CurrencyInput, useCurrencyPairState } from './../currencyInput';
 import { LoadingOutlined } from '@ant-design/icons';
 import { swap, usePoolForBasket } from '../../utils/pools';
 import { notify } from '../../utils/notifications';
+import './trade.less';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -95,10 +96,10 @@ export const TradeEntry = () => {
                 }}
             />
         </div>
-        <Button type="primary" size="large" onClick={handleSwap} style={{ width: '100%' }}
+        <Button className="trade-button" type="primary" size="large" onClick={handleSwap} style={{ width: '100%' }}
             disabled={pendingTx || !A.account || !B.account || A.account === B.account}>
             Swap
-            {pendingTx && <Spin indicator={antIcon} />}
+            {pendingTx && <Spin indicator={antIcon} className="trade-spinner" />}
         </Button>
     </>;
 }

@@ -5,7 +5,7 @@ import { Token, MintLayout, AccountLayout } from '@solana/spl-token';
 import { notify } from "./notifications";
 import { cache, getCachedAccount, useUserAccounts, useCachedPool } from "./accounts";
 import { programIds, WRAPPED_SOL_MINT } from './ids';
-import { LiquidityComponent, PoolInfo, TokenAccount, createInitSwapInstruction, TokenSwap, TokenSwapLayout, depositInstruction, withdrawInstruction, TokenSwapLayoutLegacyV0, swapInstruction, PoolConfig } from './../models';
+import { LiquidityComponent, PoolInfo, TokenAccount, createInitSwapInstruction, TokenSwapLayout, depositInstruction, withdrawInstruction, TokenSwapLayoutLegacyV0, swapInstruction, PoolConfig } from './../models';
 
 const LIQUIDITY_TOKEN_PRECISION = 8;
 
@@ -95,7 +95,8 @@ export const removeLiquidity = async (connection: Connection, wallet: any, liqui
             cleanupInstructions,
             accountRentExempt,
             accountA.info.mint,
-            signers),
+            signers,
+            new Set()),
         await findOrCreateAccountByMint(
             connection,
             wallet.publicKey,
@@ -104,7 +105,8 @@ export const removeLiquidity = async (connection: Connection, wallet: any, liqui
             cleanupInstructions,
             accountRentExempt,
             accountB.info.mint,
-            signers),
+            signers,
+            new Set()),
     ];
 
     instructions.push(Token.createApproveInstruction(
@@ -192,7 +194,8 @@ export const swap = async (connection: Connection, wallet: any, components: Liqu
         cleanupInstructions,
         accountRentExempt,
         components[1].account.info.mint,
-        signers);
+        signers,
+        new Set());
 
     // create approval for transfer transactions
     instructions.push(Token.createApproveInstruction(
@@ -239,8 +242,6 @@ export const addLiquidity = async (connection: Connection, wallet: any, componen
         if(!options) {
             throw new Error('Options are required to create new pool.');
         }
-
-        console.log(options);
         
         await _addLiquidityNewPool(wallet, connection, components, options);
     } else {
@@ -248,34 +249,37 @@ export const addLiquidity = async (connection: Connection, wallet: any, componen
     }
 }
 
+const getHoldings = (connection: Connection, accounts: string[]) => {
+    return accounts.map(acc => cache.getAccount(connection, new PublicKey(acc)));
+};
+
+const toPoolInfo = (item: any, program: PublicKey, toMerge?: PoolInfo) => {
+    const mint = new PublicKey(item.data.tokenPool);
+    return {
+        pubkeys: {
+            account: item.pubkey,
+            program: program,
+            mint,
+            holdingMints: [] as PublicKey[],
+            holdingAccounts: [item.data.tokenAccountA, item.data.tokenAccountB]
+                .map(a => new PublicKey(a))
+        },
+        legacy: false,
+        raw: item,
+    } as PoolInfo;
+};
+
 export const usePools = () => {
     const connection = useConnection();
     const [pools, setPools] = useState<PoolInfo[]>([]);
 
-    const getHoldings = (accounts: string[]) => {
-        return accounts.map(acc => cache.getAccount(connection, new PublicKey(acc)));
-    };
-
+    // initial query
     useEffect(() => {
-        const toPoolInfo = (item: any, program: PublicKey, toMerge?: PoolInfo) => {
-            const mint = new PublicKey(item.data.tokenPool);
-            return {
-                pubkeys: {
-                    account: item.pubkey,
-                    program: program,
-                    mint,
-                    holdingMints: [] as PublicKey[],
-                    holdingAccounts: [item.data.tokenAccountA, item.data.tokenAccountB]
-                        .map(a => new PublicKey(a))
-                },
-                legacy: false,
-                raw: item,
-            } as PoolInfo;
-        };
-
+        setPools([]);
+    
         const queryPools = async (swapId: PublicKey) => {
             let poolsArray: PoolInfo[] = [];
-            const swapAccounts = (await connection.getProgramAccounts(swapId))
+            (await connection.getProgramAccounts(swapId))
                 .filter(item =>
                     item.account.data.length === TokenSwapLayout.span ||
                     item.account.data.length === TokenSwapLayoutLegacyV0.span)
@@ -287,6 +291,7 @@ export const usePools = () => {
                         init: async () => { },
                     };
 
+                    // handling of legacy layout can be removed soon...
                     if (item.account.data.length === TokenSwapLayoutLegacyV0.span) {
                         result.data = TokenSwapLayoutLegacyV0.decode(item.account.data);
                         let pool = toPoolInfo(result, swapId);
@@ -298,7 +303,7 @@ export const usePools = () => {
                                 try {
                                     // TODO: this is not great
                                     // Ideally SwapLayout stores hash of all the mints to make finding of pool for a pair easier
-                                    const holdings = await Promise.all(getHoldings([result.data.tokenAccountA, result.data.tokenAccountB]));
+                                    const holdings = await Promise.all(getHoldings(connection, [result.data.tokenAccountA, result.data.tokenAccountB]));
 
                                     pool.pubkeys.holdingMints = [holdings[0].info.mint, holdings[1].info.mint] as PublicKey[];
                                 } catch (err) {
@@ -324,7 +329,9 @@ export const usePools = () => {
         Promise.all([queryPools(programIds().swap), ...programIds().swap_legacy.map(leg => queryPools(leg))]).then(all => {
             setPools(all.flat());
         });
+    }, [connection]);
 
+    useEffect(() => {
         const subID = connection.onProgramAccountChange(programIds().swap, async (info) => {
             const id = info.accountId as unknown as string;
             if (info.accountInfo.data.length === TokenSwapLayout.span) {
@@ -335,27 +342,27 @@ export const usePools = () => {
                     pubkey: new PublicKey(id),
                 };
 
-                const index = pools.findIndex(p => p.pubkeys.account.toBase58() === id);
-                if (index >= 0) {
+                const index = pools && pools.findIndex(p => p.pubkeys.account.toBase58() === id);
+                if (index && index >= 0 && pools) {
                     // TODO: check if account is empty?
 
-                    setPools([...pools.filter((p, i) => i !== index), toPoolInfo(updated, programIds().swap)]);
+                    const filtered = pools.filter((p, i) => i !== index);
+                    setPools([...filtered, toPoolInfo(updated, programIds().swap)]);
                 } else {
                     let pool = toPoolInfo(updated, programIds().swap);
-
-                    const holdings = await Promise.all(getHoldings([updated.data.tokenAccountA, updated.data.tokenAccountB]));
-                    pool.pubkeys.holdingMints = [holdings[0].info.mint, holdings[1].info.mint] as PublicKey[];
+                    
+                    pool.pubkeys.feeAccount = new PublicKey(updated.data.feeAccount);
+                    pool.pubkeys.holdingMints = [new PublicKey(updated.data.mintA), new PublicKey(updated.data.mintB)] as PublicKey[];
 
                     setPools([...pools, pool]);
                 }
             }
-
         }, 'singleGossip');
 
         return () => {
             connection.removeProgramAccountChangeListener(subID);
         }
-    }, [connection])
+    }, [connection, pools])
 
     return { pools };
 }
@@ -368,6 +375,9 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
 
     useEffect(() => {
         (async () => {
+            // reset pool during query
+            setPool(undefined);
+
             let matchingPool = pools.filter(p => !p.legacy).filter(p => p.pubkeys.holdingMints.map(a => a.toBase58()).sort().every((address, i) => address === sortedMints[i]));
 
             for (let i = 0; i < matchingPool.length; i++) {
@@ -379,10 +389,9 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
                     setPool(p);
                     return;
                 }
-                
             }
         })();
-    }, [...sortedMints]);
+    }, [...sortedMints, pools]);
 
     return pool;
 }
@@ -422,6 +431,10 @@ async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityCo
     }
 
 
+    if (!pool.pubkeys.feeAccount) {
+        throw new Error('Invald fee account')
+    }
+
     const accountA = await cache.getAccount(connection, pool.pubkeys.holdingAccounts[0]);
     const accountB = await cache.getAccount(connection, pool.pubkeys.holdingAccounts[1]);
 
@@ -440,7 +453,6 @@ async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityCo
     const amount0 = fromA.amount; // these two should include slippage
     const amount1 = fromB.amount;
 
-    // TODO:  calculate max slippage based on the serum dex price 
     const liquidity = Math.min(amount0 * (1 - SLIPPAGE) * supply / reserve0, amount1 * (1 - SLIPPAGE) * supply / reserve1);
     const instructions: TransactionInstruction[] = [];
     const cleanupInstructions: TransactionInstruction[] = [];
@@ -459,7 +471,8 @@ async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityCo
         [],
         accountRentExempt,
         pool.pubkeys.mint,
-        signers);
+        signers,
+        new Set<string>([pool.pubkeys.feeAccount.toBase58()]));
 
     // create approval for transfer transactions
     instructions.push(Token.createApproveInstruction(
@@ -520,9 +533,13 @@ function findOrCreateAccountByMint(
     cleanupInstructions: TransactionInstruction[],
     accountRentExempt: number,
     mint: PublicKey, // use to identify same type 
-    signers: Account[]): PublicKey {
+    signers: Account[],
+    excluded: Set<string>): PublicKey {
     const accountToFind = mint.toBase58();
-    const account = getCachedAccount(acc => acc.info.mint.toBase58() === accountToFind && acc.info.owner.toBase58() === owner.toBase58());
+    const account = getCachedAccount(acc => 
+        acc.info.mint.toBase58() === accountToFind && 
+        acc.info.owner.toBase58() === owner.toBase58() && 
+        !excluded.has(acc.pubkey.toBase58()));
     const isWrappedSol = accountToFind === WRAPPED_SOL_MINT.toBase58();
 
     let toAccount: PublicKey;

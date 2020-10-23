@@ -25,7 +25,7 @@ Mobile: ...
 */
 
 const AccountInfo = (props: {}) => {
-  const { connected, wallet } = useWallet();
+  const { wallet } = useWallet();
   const { account } = useNativeAccount();
 
   if (!wallet || !wallet.publicKey) {

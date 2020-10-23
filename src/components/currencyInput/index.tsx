@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { calculateDependentAmount, usePoolForBasket } from './../../utils/pools';
 import { Card, Select, } from 'antd';
 import { NumericInput } from './../numericInput';
 import { getPoolName, getTokenName, isKnownMint, KnownToken } from './../../utils/utils';
-import { useUserAccounts, useMint, useSelectedAccount, useAccountByMint, useCachedPool } from './../../utils/accounts';
+import { useUserAccounts, useMint, useAccountByMint, useCachedPool } from './../../utils/accounts';
 import './styles.less';
 import { MintInfo } from '@solana/spl-token';
 import { useConnection, useConnectionConfig } from './../../utils/connection';
@@ -27,7 +27,7 @@ export const useCurrencyPairState = () => {
     const mintB = useMint(mintAddressB);
     const pool = usePoolForBasket([mintAddressA, mintAddressB]);
 
-    const calculateDependent = async () => {
+    const calculateDependent = useCallback(async () => {
             if (pool && mintAddressA && mintAddressB) {
                 let setDependent;
                 let amount;
@@ -49,11 +49,11 @@ export const useCurrencyPairState = () => {
                     setDependent('');
                 }
             }
-        };
+        }, [pool, mintAddressA, mintAddressB, setAmountA, setAmountB, amountA, amountB, connection, lastTypedAccount]);
 
     useEffect(() => {
         calculateDependent();
-    }, [amountB, amountA, lastTypedAccount]);
+    }, [amountB, amountA, lastTypedAccount, calculateDependent]);
 
     const convertAmount = (amount: string, mint?: MintInfo) => {
         return parseFloat(amount) * Math.pow(10, mint?.decimals || 0);
@@ -98,7 +98,7 @@ export const CurrencyInput = (props: {
     const tokens = PopularTokens[env] as KnownToken[];
 
     const renderPopularTokens = tokens.map(item => {
-        return <Option value={item.mintAddress} title={item.mintAddress}>
+        return <Option key={item.mintAddress} value={item.mintAddress} title={item.mintAddress}>
             <div key={item.mintAddress} style={{ display: 'flex', alignItems: 'center' }} >
                 <TokenIcon mintAddress={item.mintAddress} />
                 {item.tokenSymbol}
@@ -130,10 +130,14 @@ export const CurrencyInput = (props: {
         const list = grouppedUserAccounts.get(mint);
 
         if(!list || list.length <= 0) {
-            return;
+            return undefined;
         }
 
         const account = list[0];
+
+        if(account.account.info.amount.eqn(0)) {
+            return undefined;
+        }
 
         let name: string;
         let icon: JSX.Element;
@@ -147,7 +151,7 @@ export const CurrencyInput = (props: {
             icon = <TokenIcon mintAddress={mint} />;
         }
 
-        return <Option value={mint} title={mint}>
+        return <Option key={account.account.pubkey.toBase58()} value={mint} title={mint}>
             <div key={mint} style={{ display: 'flex', alignItems: 'center' }} >
                 {icon}
                 {name}

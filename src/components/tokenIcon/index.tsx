@@ -9,6 +9,7 @@ export const TokenIcon = (props: { mintAddress: string, style?: React.CSSPropert
 
     if (icon) {
         return <img
+            alt="Token icon"
             key={props.mintAddress}
             width="20"
             height="20"

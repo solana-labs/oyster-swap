@@ -45,7 +45,7 @@ export const PoolAccounts = () => {
 
         <ConfigProvider renderEmpty={() => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No liquidity found." />}>
             <div className="pools-grid">
-                {pools.map(p => <PoolItem item={p as any} />)}
+                {pools.map(p => <PoolItem key={p?.account.pubkey.toBase58()} item={p as any} />)}
             </div>
         </ConfigProvider>
     </>;

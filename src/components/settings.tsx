@@ -11,7 +11,7 @@ const Slippage = (props: {}) => {
 
   useEffect(() => {
     setValue(slippagePct.toString());
-  }, [slippage]);
+  }, [slippage, slippagePct]);
 
   const isSelected = (val: number) => {
     return val === slippagePct ? 'primary' : 'default';
