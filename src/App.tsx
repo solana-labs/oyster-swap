@@ -33,7 +33,7 @@ const AccountInfo = (props: {}) => {
   }
 
   return <div className="wallet-wrapper">
-    <span>{((account?.lamports || 0) / LAMPORTS_PER_SOL ).toFixed(2)} SOL</span>
+    <span>{((account?.lamports || 0) / LAMPORTS_PER_SOL).toFixed(2)} SOL</span>
     <div className="wallet-key">
       {shortenAddress(`${wallet.publicKey}`)}
       <Identicon address={wallet.publicKey.toBase58()} style={{ marginLeft: '0.5rem' }} />
@@ -55,7 +55,7 @@ function App() {
         </Popover>)}
 
       <div >
-      {!connected && <Button
+        {!connected && <Button
           type="text"
           size="large"
           onClick={connected ? wallet.disconnect : wallet.connect}
@@ -82,7 +82,7 @@ function App() {
     <div className="App">
       <div className="Banner">
         <div className="Banner-description">
-            Swap on Solana is unaudited demo software. Use at your own risk
+          Swap on Solana is unaudited demo software. Use at your own risk
             <Info style={{ color: 'black' }} text={
             <span>
               Any content produced by Solana, or developer resources that Solana provides, are for educational and inspiration purposes only.
@@ -94,21 +94,23 @@ function App() {
       {TopBar}
       <ExchangeView />
       <div className="social-buttons">
-          <GitHubButton href="https://github.com/solana-labs/oyster-swap" 
-            data-color-scheme="no-preference: light; light: light; dark: light;" 
-            data-icon="octicon-star" 
-            data-size="large" 
-            data-show-count={true}
-            aria-label="Star solana-labs/oyster-swap on GitHub">Star</GitHubButton>
-          <GitHubButton href="https://github.com/solana-labs/oyster-swap/fork" 
-            data-color-scheme="no-preference: light; light: light; dark: light;" 
-            data-size="large" 
-            aria-label="Fork solana-labs/oyster-swap on GitHub">
-            Fork
+        <GitHubButton href="https://github.com/solana-labs/oyster-swap"
+          data-color-scheme="no-preference: light; light: light; dark: light;"
+          data-icon="octicon-star"
+          data-size="large"
+          data-show-count={true}
+          aria-label="Star solana-labs/oyster-swap on GitHub">Star</GitHubButton>
+        <GitHubButton href="https://github.com/solana-labs/oyster-swap/fork"
+          data-color-scheme="no-preference: light; light: light; dark: light;"
+          data-size="large"
+          aria-label="Fork solana-labs/oyster-swap on GitHub">
+          Fork
           </GitHubButton>
-          <a href="https://twitter.com/solana?ref_src=twsrc%5Etfw" 
-          className="twitter-follow-button" 
+        <a href="https://twitter.com/solana?ref_src=twsrc%5Etfw"
+          className="twitter-follow-button"
           data-size="large" data-show-screen-name="false" data-show-count="false">Follow @solana</a>
+        <a className="fab fa-telegram telegram" title="Join Telegram" href="https://t.me/solanaio" target="_blank" rel="noopener noreferrer" />
+        <a className="fab fa-discord discord" title="Join Discord" href="https://solana.com/discord" target="_blank" rel="noopener noreferrer" />
       </div>
     </div>
   );
