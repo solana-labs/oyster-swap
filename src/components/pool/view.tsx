@@ -1,11 +1,11 @@
 import React from 'react';
-import { List, ConfigProvider, Empty } from 'antd'
+import { ConfigProvider, Empty } from 'antd'
 import { useOwnedPools } from './../../utils/pools';
 import {RemoveLiquidity} from './remove';
 import { getPoolName } from '../../utils/utils';
 import { useMint } from '../../utils/accounts';
 import { useConnectionConfig } from '../../utils/connection';
-import { PoolIcon, TokenIcon } from '../tokenIcon';
+import { PoolIcon } from '../tokenIcon';
 import { PoolInfo, TokenAccount } from '../../models';
 import './view.less';
 
@@ -25,7 +25,7 @@ const PoolItem = (props: { item: { pool: PoolInfo, isFeeAccount: boolean, accoun
     if (item) {
         return <>
             <div>{amount.toFixed(4)}</div>
-            <span>{ item.isFeeAccount ? ' (F) ' : ' ' }</span>
+            <span title="Fee account">{ item.isFeeAccount ? ' (F) ' : ' ' }</span>
             {sorted.length > 1 && <PoolIcon mintA={sorted[0]} mintB={sorted[1]} style={{ marginLeft: '0.5rem' }} /> }
             <div>{getPoolName(env, item.pool)}</div>
             <RemoveLiquidity instance={item} />

@@ -12,16 +12,18 @@ export const PROGRAM_IDS = [
     {
         name: 'mainnet-beta',
         swap: () => ({
-            current: new PublicKey('HYv7pNgHkkBGxfrnCre2pMgLpWm7LJPKxiyZVytN5HrM'),
+            current: new PublicKey('DnXyn8dAR5fJdqfBQciQ6gPSDNMQSTkQrPsR65ZF5qoW'),
             legacy: [
+                new PublicKey('HYv7pNgHkkBGxfrnCre2pMgLpWm7LJPKxiyZVytN5HrM'),
             ],
         })
     },
     {
         name: 'testnet',
         swap: () => ({
-            current: new PublicKey('CrRvVBS4Hmj47TPU3cMukurpmCUYUrdHYxTQBxncBGqw'),
+            current: new PublicKey('9tdctNJuFsYZ6VrKfKEuwwbPp4SFdFw3jYBZU8QUtzeX'),
             legacy: [
+                new PublicKey('CrRvVBS4Hmj47TPU3cMukurpmCUYUrdHYxTQBxncBGqw'),
             ],
         })
     },

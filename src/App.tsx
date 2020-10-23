@@ -12,6 +12,7 @@ import { Info } from './components/info';
 import { Identicon } from './components/identicon';
 import { useNativeAccount } from './utils/accounts';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import GitHubButton from 'react-github-btn'
 
 /*
 
@@ -92,6 +93,23 @@ function App() {
       </div>
       {TopBar}
       <ExchangeView />
+      <div className="social-buttons">
+          <GitHubButton href="https://github.com/solana-labs/oyster-swap" 
+            data-color-scheme="no-preference: light; light: light; dark: light;" 
+            data-icon="octicon-star" 
+            data-size="large" 
+            data-show-count={true}
+            aria-label="Star solana-labs/oyster-swap on GitHub">Star</GitHubButton>
+          <GitHubButton href="https://github.com/solana-labs/oyster-swap/fork" 
+            data-color-scheme="no-preference: light; light: light; dark: light;" 
+            data-size="large" 
+            aria-label="Fork solana-labs/oyster-swap on GitHub">
+            Fork
+          </GitHubButton>
+          <a href="https://twitter.com/solana?ref_src=twsrc%5Etfw" 
+          className="twitter-follow-button" 
+          data-size="large" data-show-screen-name="false" data-show-count="false">Follow @solana</a>
+      </div>
     </div>
   );
 }
