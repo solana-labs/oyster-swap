@@ -79,7 +79,9 @@ export const PoolConfigCard = (props: { options: PoolConfig, setOptions: (config
             </>
             <>
                 <span>Curve Type:</span>
-                <Select defaultValue="0" style={{ width: 200 }} >
+                <Select defaultValue="0" 
+                style={{ width: 200 }} 
+                onChange={val => props.setOptions({ ...props.options, curveType: parseInt(val) as any})} >
                     <Option value="0">Constant Product</Option>
                     <Option value="1">Flat</Option>
                 </Select>
