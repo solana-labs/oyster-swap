@@ -370,7 +370,6 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
                 const account = await cache.getAccount(connection, p.pubkeys.holdingAccounts[0])
 
                 if(!account.info.amount.eqn(0)) {
-                    debugger;
                     setPool(p);
                     return;
                 }
@@ -388,16 +387,18 @@ export const useOwnedPools = () => {
 
     const map = userAccounts.reduce((acc, item) => {
         const key = item.info.mint.toBase58();
-        acc.set(key, item);
+        acc.set(key, [...(acc.get(key) || []), item]);
         return acc;
-    }, new Map<string, TokenAccount>())
+    }, new Map<string, TokenAccount[]>())
 
     return pools.filter(p => map.has(p.pubkeys.mint.toBase58())).map(item => {
-        return {
-            account: map.get(item.pubkeys.mint.toBase58()) as TokenAccount,
-            pool: item,
-        }
-    });
+        return map.get(item.pubkeys.mint.toBase58())?.map(a => {
+            return {
+                account: a as TokenAccount,
+                pool: item,
+            };
+        });
+    }).flat();
 };
 
 async function _addLiquidityExistingPool(pool: PoolInfo, components: LiquidityComponent[], connection: Connection, wallet: any, SLIPPAGE: number) {
@@ -589,8 +590,12 @@ async function _addLiquidityNewPool(wallet: any, connection: Connection, compone
 
     // sets fee in the pool to 0.3%
     // see for fees details: https://uniswap.org/docs/v2/advanced-topics/fees/
-    const feeNumerator = 3;
-    const feeDenominator = 1000;
+    const feeNumerator = 25;
+    const feeDenominator = 10000;
+
+    // additional fees fwd to owner account on every trade
+    const tradeFeeNumerator = 5;
+    const tradeFeeDenominator = 10000;
 
     let instructions: TransactionInstruction[] = [];
     let cleanupInstructions: TransactionInstruction[] = [];
@@ -713,6 +718,10 @@ async function _addLiquidityNewPool(wallet: any, connection: Connection, compone
         curveType,
         feeNumerator,
         feeDenominator,
+        tradeFeeNumerator,
+        tradeFeeDenominator,
+        0, 
+        0,
     ));
 
     // All instructions didn't fit in single transaction 

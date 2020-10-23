@@ -27,8 +27,8 @@ const PoolItem = (props: { item: { pool: PoolInfo, account: TokenAccount } }) =>
                 <RemoveLiquidity instance={item} />
             ]}
         >
-            <div>{amount.toFixed(2)}</div>
-            {/* <PoolIcon mintA={sorted[0]} mintB={sorted[1]} style={{ marginLeft: '0.5rem' }} /> */}
+            <div>{amount.toFixed(4)}</div>
+            {sorted.length > 1 && <PoolIcon mintA={sorted[0]} mintB={sorted[1]} style={{ marginLeft: '0.5rem' }} /> }
             <div>{getPoolName(env, item.pool)}</div>
         </List.Item>;
     }

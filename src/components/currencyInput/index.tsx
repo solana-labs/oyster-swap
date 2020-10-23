@@ -9,6 +9,7 @@ import { MintInfo } from '@solana/spl-token';
 import { useConnection, useConnectionConfig } from './../../utils/connection';
 import { PoolIcon, TokenIcon } from './../tokenIcon';
 import PopularTokens from './../../utils/token-list.json';
+import { PublicKey } from '@solana/web3.js';
 
 const { Option } = Select;
 
@@ -117,7 +118,7 @@ export const CurrencyInput = (props: {
         if(instance) {
             name = getPoolName(env, instance.pool);
 
-            const sorted = instance.pool.pubkeys.holdingMints.map(a => a.toBase58()).sort();
+            const sorted = instance.pool.pubkeys.holdingMints.map((a: PublicKey) => a.toBase58()).sort();
             icon = <PoolIcon mintA={sorted[0]} mintB={sorted[1]} />;
         } else {
             name = getTokenName(env, mint);
