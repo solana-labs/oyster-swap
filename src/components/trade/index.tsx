@@ -13,6 +13,8 @@ const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 // TODO:
 // Compute price breakdown with/without fee
 // Show slippage
+// Show fee information
+// TODO: destination account shouldnt be required
 
 export const TradeEntry = () => {
     const { wallet } = useWallet();
@@ -56,7 +58,6 @@ export const TradeEntry = () => {
                     type: 'error'
                 })
             } finally {
-                // TODO: refresh accounts
                 setPendingTx(false);
             }
         }

@@ -1,5 +1,5 @@
 import { Account, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { useConnection } from "./connection";
+import { sendTransaction, useConnection } from "./connection";
 import { useEffect, useState } from "react";
 import { Token, MintLayout, AccountLayout } from '@solana/spl-token';
 import { notify } from "./notifications";
@@ -8,52 +8,6 @@ import { programIds, WRAPPED_SOL_MINT } from './ids';
 import { LiquidityComponent, PoolInfo, TokenAccount, createInitSwapInstruction, TokenSwapLayout, depositInstruction, withdrawInstruction, TokenSwapLayoutLegacyV0, swapInstruction, PoolConfig } from './../models';
 
 const LIQUIDITY_TOKEN_PRECISION = 8;
-
-export const sendTransaction = async (connection: any, wallet: any, instructions: TransactionInstruction[], signers: Account[]) => {
-    let transaction = new Transaction();
-    instructions.forEach(instruction => transaction.add(instruction));
-    transaction.recentBlockhash = (await connection.getRecentBlockhash('max')).blockhash;
-    transaction.setSigners(
-        // fee payied by the wallet owner
-        wallet.publicKey,
-        ...signers.map(s => s.publicKey)
-    );
-    if (signers.length > 0) {
-        transaction.partialSign(...signers);
-    }
-    transaction = await wallet.signTransaction(transaction);
-    const rawTransaction = transaction.serialize();
-    let options = {
-        skipPreflight: true,
-        commitment: 'singleGossip'
-    }
-
-    const txid = await connection.sendRawTransaction(
-        rawTransaction,
-        options);
-
-    const status = (
-        await connection.confirmTransaction(
-            txid,
-            options && options.commitment,
-        )
-    ).value;
-
-    if (status.err) {
-        // TODO: notify
-        notify({
-            message: 'Transaction failed...',
-            description: `${txid}`,
-            type: 'error'
-        });
-
-        throw new Error(
-            `Raw transaction ${txid} failed (${JSON.stringify(status)})`,
-        );
-    }
-
-    return txid;
-}
 
 export const removeLiquidity = async (connection: Connection, wallet: any, liquidityAmount: number, account: TokenAccount, pool?: PoolInfo) => {
     if (!pool) {
@@ -277,7 +231,7 @@ export const usePools = () => {
     useEffect(() => {
         setPools([]);
     
-        const queryPools = async (swapId: PublicKey) => {
+        const queryPools = async (swapId: PublicKey, isLegacy = false) => {
             let poolsArray: PoolInfo[] = [];
             (await connection.getProgramAccounts(swapId))
                 .filter(item =>
@@ -295,7 +249,7 @@ export const usePools = () => {
                     if (item.account.data.length === TokenSwapLayoutLegacyV0.span) {
                         result.data = TokenSwapLayoutLegacyV0.decode(item.account.data);
                         let pool = toPoolInfo(result, swapId);
-                        pool.legacy = true;
+                        pool.legacy = isLegacy;
                         poolsArray.push(pool as PoolInfo);
                     
 
@@ -310,10 +264,10 @@ export const usePools = () => {
                                     console.log(err)
                                 }
                             }
-
                     } else {
                         result.data = TokenSwapLayout.decode(item.account.data);
                         let pool = toPoolInfo(result, swapId);
+                        pool.legacy = isLegacy;
                         pool.pubkeys.feeAccount = new PublicKey(result.data.feeAccount);
                         pool.pubkeys.holdingMints = [new PublicKey(result.data.mintA), new PublicKey(result.data.mintB)] as PublicKey[];
 
@@ -326,7 +280,7 @@ export const usePools = () => {
             return poolsArray;
         };
 
-        Promise.all([queryPools(programIds().swap), ...programIds().swap_legacy.map(leg => queryPools(leg))]).then(all => {
+        Promise.all([queryPools(programIds().swap), ...programIds().swap_legacy.map(leg => queryPools(leg, true))]).then(all => {
             setPools(all.flat());
         });
     }, [connection]);
