@@ -329,11 +329,9 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
     const connection = useConnection();
     const { pools } = useCachedPool();
     const [pool, setPool] = useState<PoolInfo>();
-
+    const sortedMints = [...mints].sort();
     useEffect(() => {
         (async () => {
-
-            const sortedMints = [...mints].sort();
             // reset pool during query
             setPool(undefined);
 
@@ -350,7 +348,7 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
                 }
             }
         })();
-    }, [connection, mints, pools]);
+    }, [connection, ...sortedMints, pools]);
 
     return pool;
 }
