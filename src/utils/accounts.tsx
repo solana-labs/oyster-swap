@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useConnection } from './connection';
 import { useWallet } from './wallet';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
-import { programIds, WRAPPED_SOL_MINT } from './ids';
+import { programIds, SWAP_HOST_FEE_ADDRESS, WRAPPED_SOL_MINT } from './ids';
 import { AccountLayout, u64, MintInfo, MintLayout } from '@solana/spl-token';
 import { usePools } from './pools';
 import { TokenAccount, PoolInfo } from './../models'
@@ -71,26 +71,26 @@ export const cache = {
     } else {
       id = pubKey;
     }
-  
+
     const address = id.toBase58()
-  
+
     let account = accountsCache.get(address);
     if (account) {
       return account;
     }
-  
+
     let query = pendingAccountCalls.get(address);
     if (query) {
       return query;
     }
-  
+
     query = getAccountInfo(connection, id).then(data => {
       pendingAccountCalls.delete(address);
       accountsCache.set(address, data);
       return data;
     }) as Promise<TokenAccount>;
     pendingAccountCalls.set(address, query as any);
-  
+
     return query;
   },
   getMint: async (connection: Connection, pubKey: string | PublicKey) => {
@@ -100,17 +100,17 @@ export const cache = {
     } else {
       id = pubKey;
     }
-  
+
     let mint = mintCache.get(id.toBase58());
     if (mint) {
       return mint;
     }
-  
+
     let query = getMintInfo(connection, id);
-  
-  
+
+
     mintCache.set(id.toBase58(), query as any);
-  
+
     return query;
   }
 };
@@ -124,9 +124,9 @@ export const getCachedAccount = (predicate: (account: TokenAccount) => boolean) 
 }
 
 function wrapNativeAccount(pubkey: PublicKey, account?: AccountInfo<Buffer>): TokenAccount | undefined {
-  if(!account) {
+  if (!account) {
     return undefined;
-  }  
+  }
 
   return {
     pubkey: pubkey,
@@ -147,62 +147,88 @@ function wrapNativeAccount(pubkey: PublicKey, account?: AccountInfo<Buffer>): To
 
 }
 
-export function UserAccountsProvider({ children = null as any }) {
+const UseNativeAccount = () => {
+  const connection = useConnection();
+  const { wallet } = useWallet();
+
+  const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
+  useEffect(() => {
+    if (!connection || !wallet?.publicKey) {
+      return
+    }
+
+    connection.getAccountInfo(wallet.publicKey).then(acc => {
+      if (acc) {
+        setNativeAccount(acc);
+      }
+    })
+    connection.onAccountChange(wallet.publicKey, (acc) => {
+      if (acc) {
+        setNativeAccount(acc);
+      }
+    })
+  }, [setNativeAccount, wallet, wallet.publicKey, connection]);
+
+  return { nativeAccount };
+}
+
+const PRECACHED_OWNERS = new Set<string>();
+const precacheUserTokenAccounts = async (connection: Connection, owner?: PublicKey) => {
+  if (!owner) {
+    return;
+  }
+
+  // used for filtering account updates over websocket
+  PRECACHED_OWNERS.add(owner.toBase58());
+
+  // user accounts are update via ws subscription
+  const accounts = await connection.getTokenAccountsByOwner(owner, {
+    programId: programIds().token
+  });
+  accounts.value.map(info => {
+    const data = deserializeAccount(info.account.data);
+    // need to query for mint to get decimals
+
+    // TODO: move to web3.js for decoding on the client side... maybe with callback
+    const details = {
+      pubkey: info.pubkey,
+      account: {
+        ...info.account,
+      },
+      info: data
+    } as TokenAccount;
+
+    return details;
+  }).forEach(acc => {
+    accountsCache.set(acc.pubkey.toBase58(), acc);
+  })
+}
+
+export function AccountsProvider({ children = null as any }) {
   const connection = useConnection();
   const { wallet, connected } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
-  const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
+  const { nativeAccount } = UseNativeAccount();
   const { pools } = usePools();
 
   const selectUserAccounts = useCallback(() => {
     return [...accountsCache.values()].filter((a) => a.info.owner.toBase58() === wallet.publicKey.toBase58());
   }, [wallet]);
 
-  useEffect(() =>{
+  useEffect(() => {
     setUserAccounts([wrapNativeAccount(wallet.publicKey, nativeAccount), ...tokenAccounts].filter(a => a !== undefined) as TokenAccount[]);
-  }, [nativeAccount, tokenAccounts]);
+  }, [nativeAccount, wallet, tokenAccounts]);
 
   useEffect(() => {
     if (!connection || !wallet || !wallet.publicKey) {
       setTokenAccounts([]);
     } else {
-      const queryTokenAccounts = async () => {
-        // user accounts are update via ws subscription
-        const accounts = await connection.getTokenAccountsByOwner(wallet.publicKey, {
-          programId: programIds().token
-        });
-        accounts.value.map(info => {
-          const data = deserializeAccount(info.account.data);
-          // need to query for mint to get decimals
+      // cache host accounts to avoid query during swap
+      precacheUserTokenAccounts(connection, SWAP_HOST_FEE_ADDRESS);
 
-          // TODO: move to web3.js for decoding on the client side... maybe with callback
-          const details = {
-            pubkey: info.pubkey,
-            account: {
-              ...info.account,
-            },
-            info: data
-          } as TokenAccount;
-
-          return details;
-        }).forEach(acc => {
-          accountsCache.set(acc.pubkey.toBase58(), acc);
-        })
+      precacheUserTokenAccounts(connection, wallet.publicKey).then(() => {
         setTokenAccounts(selectUserAccounts());
-      }
-
-      queryTokenAccounts();
-    
-      connection.getAccountInfo(wallet.publicKey).then(acc => {
-        if(acc) {
-          setNativeAccount(acc);
-        }
-      })
-      connection.onAccountChange(wallet.publicKey, (acc) => {
-        if(acc) {
-          setNativeAccount(acc);
-        }
       })
 
       // This can return different types of accounts: token-account, mint, multisig
@@ -222,24 +248,20 @@ export function UserAccountsProvider({ children = null as any }) {
             info: data
           } as TokenAccount;
 
-          if (details.info.owner.toBase58() === wallet?.publicKey?.toBase58() || accountsCache.has(id)) {
+          if (PRECACHED_OWNERS.has(details.info.owner.toBase58()) || accountsCache.has(id)) {
             accountsCache.set(id, details);
             setTokenAccounts(selectUserAccounts());
-            accountEmitter.raiseAccountUpdated(id);   
-          } 
+            accountEmitter.raiseAccountUpdated(id);
+          }
         } else if (info.accountInfo.data.length === MintLayout.span) {
-          // TODO: update mints that are already in the cache
+          if (mintCache.has(id)) {
+            const data = Buffer.from(info.accountInfo.data);
+            const mint = deserializeMint(data);
+            mintCache.set(id, new Promise((resolve) => resolve(mint)));
+            accountEmitter.raiseAccountUpdated(id);
+          }
 
-          
-
-        if (mintCache.has(id)) {
-          const data = Buffer.from(info.accountInfo.data);
-          const mint = deserializeMint(data);
-          mintCache.set(id, new Promise((resolve) => resolve(mint)));
-          accountEmitter.raiseAccountUpdated(id);   
-        } 
-
-          accountEmitter.raiseAccountUpdated(id); 
+          accountEmitter.raiseAccountUpdated(id);
         }
       }, 'singleGossip');
 
@@ -247,7 +269,7 @@ export function UserAccountsProvider({ children = null as any }) {
         connection.removeProgramAccountChangeListener(tokenSubID);
       }
     }
-  }, [connected, wallet?.publicKey]);
+  }, [connection, connected, wallet?.publicKey]);
 
 
   return (
@@ -283,7 +305,7 @@ export function useMint(id?: string) {
     }));
     const onAccountEvent = (e: Event) => {
       const event = e as AccountUpdateEvent;
-      if(event.id === id) {
+      if (event.id === id) {
         cache.getMint(connection, id).then(setMint);
       }
     };
@@ -292,7 +314,7 @@ export function useMint(id?: string) {
     return () => {
       accountEmitter.removeEventListener(AccountUpdateEvent.type, onAccountEvent);
     }
-  }, [id])
+  }, [connection, id])
 
   return mint;
 }
@@ -308,14 +330,15 @@ export function useAccount(pubKey?: PublicKey) {
   const connection = useConnection();
   const [account, setAccount] = useState<TokenAccount>();
 
+  const key = pubKey?.toBase58();
   useEffect(() => {
     const query = async () => {
       try {
-        if (!pubKey) {
+        if (!key) {
           return;
         }
 
-        const acc = await cache.getAccount(connection, pubKey).catch(err => notify({
+        const acc = await cache.getAccount(connection, key).catch(err => notify({
           message: err.message,
           type: 'error'
         }));
@@ -323,7 +346,7 @@ export function useAccount(pubKey?: PublicKey) {
           setAccount(acc);
         }
 
-        
+
       } catch (err) {
         console.error(err);
       }
@@ -333,7 +356,7 @@ export function useAccount(pubKey?: PublicKey) {
 
     const onAccountEvent = (e: Event) => {
       const event = e as AccountUpdateEvent;
-      if(event.id === pubKey?.toBase58()) {
+      if (event.id === key) {
         query();
       }
     };
@@ -342,7 +365,7 @@ export function useAccount(pubKey?: PublicKey) {
     return () => {
       accountEmitter.removeEventListener(AccountUpdateEvent.type, onAccountEvent);
     }
-  }, [connection, pubKey?.toBase58()])
+  }, [connection, key])
 
   return account;
 }

@@ -6,6 +6,7 @@ import { PoolConfig } from '../../models';
 
 const Option = Select.Option;
 
+
 export const DEFAULT_DENOMINATOR = 10_000;
 
 const FeeInput = (props: { numerator: number, denominator: number, set: (numerator: number, denominator: number) => void }) => {
@@ -26,6 +27,8 @@ const FeeInput = (props: { numerator: number, denominator: number, set: (numerat
     </div>);
 }
 
+// sets fee in the pool to 0.3%
+// see for fees details: https://uniswap.org/docs/v2/advanced-topics/fees/
 export const PoolConfigCard = (props: { options: PoolConfig, setOptions: (config: PoolConfig) => void }) => {
     const {
         tradeFeeNumerator,
@@ -79,9 +82,9 @@ export const PoolConfigCard = (props: { options: PoolConfig, setOptions: (config
             </>
             <>
                 <span>Curve Type:</span>
-                <Select defaultValue="0" 
-                style={{ width: 200 }} 
-                onChange={val => props.setOptions({ ...props.options, curveType: parseInt(val) as any})} >
+                <Select defaultValue="0"
+                    style={{ width: 200 }}
+                    onChange={val => props.setOptions({ ...props.options, curveType: parseInt(val) as any })} >
                     <Option value="0">Constant Product</Option>
                     <Option value="1">Flat</Option>
                 </Select>

@@ -5,15 +5,15 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { WalletProvider } from './utils/wallet';
 import { ConnectionProvider } from './utils/connection';
-import { UserAccountsProvider } from './utils/accounts';
+import { AccountsProvider } from './utils/accounts';
 
 ReactDOM.render(
   <React.StrictMode>
     <ConnectionProvider>
       <WalletProvider>
-        <UserAccountsProvider>
+        <AccountsProvider>
           <App />
-        </UserAccountsProvider>
+        </AccountsProvider>
       </WalletProvider>
     </ConnectionProvider>
   </React.StrictMode>,

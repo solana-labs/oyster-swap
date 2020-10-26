@@ -25,7 +25,7 @@ export const AddToLiquidity = () => {
         curveType: 0,
         tradeFeeNumerator: 25,
         tradeFeeDenominator: DEFAULT_DENOMINATOR,
-        ownerTradeFeeNumerator: 5,
+        ownerTradeFeeNumerator: 4,
         ownerTradeFeeDenominator: DEFAULT_DENOMINATOR,
         ownerWithdrawFeeNumerator: 0,
         ownerWithdrawFeeDenominator: DEFAULT_DENOMINATOR,
@@ -61,7 +61,7 @@ export const AddToLiquidity = () => {
     return <div>
         <Popover trigger="hover" content={
             <div style={{ width: 300 }}>
-                Liquidity providers earn a 0.3% fee on all trades proportional to their share of the pool.
+                Liquidity providers earn a fixed percentage fee on all trades proportional to their share of the pool.
                 Fees are added to the pool, accrue in real time and can be claimed by withdrawing your liquidity.
         </div>}>
             <Button type="text">Read more about providing liquidity.</Button>
@@ -115,8 +115,8 @@ export const AddToLiquidity = () => {
             type="primary"
             size="large"
             overlay={<PoolConfigCard options={options} setOptions={setOptions} />}>
-                Create Liquidity Pool
+            Create Liquidity Pool
                 {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
-            </Dropdown.Button>}
+        </Dropdown.Button>}
     </div>;
 };
