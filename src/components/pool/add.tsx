@@ -10,7 +10,7 @@ import { SupplyOverview } from "./supplyOverview";
 import { CurrencyInput, useCurrencyPairState } from "../currencyInput";
 import { DEFAULT_DENOMINATOR } from "./config";
 import "./add.less";
-import {PoolConfig} from "../../models";
+import { PoolConfig } from "../../models";
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -49,7 +49,8 @@ export const AddToLiquidity = () => {
         .then(() => {
           setPendingTx(false);
         })
-        .catch(() => {
+        .catch((e) => {
+          console.log("Transaction failed", e);
           notify({
             description:
               "Please try again and approve transactions from your wallet",
@@ -112,18 +113,18 @@ export const AddToLiquidity = () => {
         mintAddress={[A.mintAddress, B.mintAddress]}
         pool={pool}
       />
-        <Button
-          className="add-button"
-          type="primary"
-          size="large"
-          onClick={provideLiquidity}
-          disabled={
-            pendingTx || !A.account || !B.account || A.account === B.account
-          }
-        >
-            {pool ? 'Provide Liquidity' : 'Create Liquidity Pool'}
-          {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
-        </Button>
+      <Button
+        className="add-button"
+        type="primary"
+        size="large"
+        onClick={provideLiquidity}
+        disabled={
+          pendingTx || !A.account || !B.account || A.account === B.account
+        }
+      >
+        {pool ? "Provide Liquidity" : "Create Liquidity Pool"}
+        {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+      </Button>
     </div>
   );
 };
