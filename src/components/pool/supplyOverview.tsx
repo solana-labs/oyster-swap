@@ -64,15 +64,21 @@ const useMidPriceInUSD = (mint: string) => {
   return { price, isBase };
 }
 
-// TODO: add imbalance overview based on serum mid-price
-
 export const SupplyOverview = (props: { mintAddress: string[], pool?: PoolInfo }) => {
   const { mintAddress, pool } = props;
   const connection = useConnection();
   const mintA = useMint(mintAddress[0]);
   const mintB = useMint(mintAddress[1]);
-  const accountA = useAccount(pool?.pubkeys.holdingAccounts[0]);
-  const accountB = useAccount(pool?.pubkeys.holdingAccounts[1]);
+  const accountA = useAccount(
+    pool?.pubkeys.holdingMints[0].toBase58() === mintAddress[0] ?
+      pool?.pubkeys.holdingAccounts[0] :
+      pool?.pubkeys.holdingAccounts[1]
+  );
+  const accountB = useAccount(
+    pool?.pubkeys.holdingMints[0].toBase58() === mintAddress[0] ?
+      pool?.pubkeys.holdingAccounts[1] :
+      pool?.pubkeys.holdingAccounts[0]
+  );
   const { env } = useConnectionConfig();
   const [data, setData] = useState<{ name: string, value: number, color: string }[]>([]);
   const { price: priceA, isBase: isBaseA } = useMidPriceInUSD(mintAddress[0]);
@@ -88,12 +94,12 @@ export const SupplyOverview = (props: { mintAddress: string[], pool?: PoolInfo }
     (async () => {
       let chart = [
         {
-          name: getTokenName(env, pool?.pubkeys.holdingMints[0].toBase58()),
+          name: getTokenName(env, mintAddress[0]),
           value: convert(accountA, mintA, hasBothPrices ? priceA : undefined),
           color: '#6610f2'
         },
         {
-          name: getTokenName(env, pool?.pubkeys.holdingMints[1].toBase58()),
+          name: getTokenName(env, mintAddress[1]),
           value: convert(accountB, mintB, hasBothPrices ? priceB : undefined),
           color: '#d83aeb'
         }
