@@ -35,12 +35,23 @@ export const ExchangeView = (props: { }) => {
       <div className="App-logo" />
     </div>
     <div className='App-Bar-right'>
+      <Button
+        type="text"
+        size="large"
+        style={{ color: '#2abdd2' }}
+      >
+        <a
+          href={"https://dex.projectserum.com"}
+          target="_blank" rel="noopener noreferrer"
+        >
+          Trade
+        </a>
+      </Button>
       <AccountInfo />
       {connected && (
         <Popover placement="bottomRight" content={<PoolAccounts />} trigger="click">
           <Button type="text">My Pools</Button>
         </Popover>)}
-
       <div >
         {!connected && <Button
           type="text"
@@ -69,9 +80,9 @@ export const ExchangeView = (props: { }) => {
           className="exchange-card"
           headStyle={ { padding: 0 }}
           tabList={tabList}
-          tabProps={{ 
+          tabProps={{
               tabBarGutter: 0,
-              
+
           }}
           activeTabKey={activeTab}
           onTabChange={key => {
