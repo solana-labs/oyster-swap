@@ -15,54 +15,54 @@ export interface KnownToken {
 
 const AddressToToken = Object.keys(PopularTokens).reduce((map, key) => {
   const tokens = PopularTokens[key as ENV] as KnownToken[];
-  const knownMints = tokens.reduce((map,item) =>{
-      map.set(item.mintAddress, item);
-      return map;
-  }, new Map<string, KnownToken>()) ;
+  const knownMints = tokens.reduce((map, item) => {
+    map.set(item.mintAddress, item);
+    return map;
+  }, new Map<string, KnownToken>());
 
   map.set(key as ENV, knownMints);
 
   return map;
-    
+
 }, new Map<ENV, Map<string, KnownToken>>());
 
 export function useLocalStorageState(key: string, defaultState?: string) {
-    const [state, setState] = useState(() => {
-      // NOTE: Not sure if this is ok
-      const storedState = localStorage.getItem(key);
-      if (storedState) {
-        return JSON.parse(storedState);
-      }
-      return defaultState;
-    });
-  
-    const setLocalStorageState = useCallback(
-      (newState) => {
-        const changed = state !== newState;
-        if (!changed) {
-          return;
-        }
-        setState(newState);
-        if (newState === null) {
-          localStorage.removeItem(key);
-        } else {
-          localStorage.setItem(key, JSON.stringify(newState));
-        }
-      },
-      [state, key],
-    );
-  
-    return [state, setLocalStorageState];
-  }
+  const [state, setState] = useState(() => {
+    // NOTE: Not sure if this is ok
+    const storedState = localStorage.getItem(key);
+    if (storedState) {
+      return JSON.parse(storedState);
+    }
+    return defaultState;
+  });
 
-  // shorten the checksummed version of the input address to have 0x + 4 characters at start and end
+  const setLocalStorageState = useCallback(
+    (newState) => {
+      const changed = state !== newState;
+      if (!changed) {
+        return;
+      }
+      setState(newState);
+      if (newState === null) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(newState));
+      }
+    },
+    [state, key],
+  );
+
+  return [state, setLocalStorageState];
+}
+
+// shorten the checksummed version of the input address to have 0x + 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
   return `0x${address.substring(0, chars)}...${address.substring(44 - chars)}`
 }
 
 export function getTokenName(env: ENV, mintAddress: string): string {
   const knownSymbol = AddressToToken.get(env)?.get(mintAddress)?.tokenSymbol;
-  if(knownSymbol) {
+  if (knownSymbol) {
     return knownSymbol;
   }
 
@@ -82,11 +82,19 @@ export function isKnownMint(env: ENV, mintAddress: string) {
   return !!AddressToToken.get(env)?.get(mintAddress);
 }
 
-export function formatTokenAmount(account?: TokenAccount, mint?: MintInfo): string {
-  if(!account) {
-    return '';
+export function convert(account?: TokenAccount, mint?: MintInfo, rate: number = 1.0): number {
+  if (!account) {
+    return 0;
   }
 
   const precision = Math.pow(10, (mint?.decimals || 0));
-  return (account.info.amount?.toNumber() / precision)?.toFixed(2);
+  return (account.info.amount?.toNumber() / precision) * rate;
+}
+
+export function formatTokenAmount(account?: TokenAccount, mint?: MintInfo, rate: number = 1.0, prefix = '', suffix = ''): string {
+  if (!account) {
+    return '';
+  }
+
+  return `${[prefix]}${convert(account, mint, rate).toFixed(2)}${suffix}`;
 }

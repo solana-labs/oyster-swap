@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@craco/craco": "^5.7.0",
+    "@project-serum/serum": "^0.13.7",
     "@project-serum/sol-wallet-adapter": "^0.1.1",
     "@solana/spl-token": "0.0.11",
     "@solana/spl-token-swap": "0.0.2",
@@ -25,7 +26,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
     "recharts": "^1.8.5",
-    "typescript": "^3.7.5"
+    "typescript": "^4.0.0"
   },
   "scripts": {
     "start": "craco start",

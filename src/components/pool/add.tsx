@@ -25,7 +25,7 @@ export const AddToLiquidity = () => {
         curveType: 0,
         tradeFeeNumerator: 25,
         tradeFeeDenominator: DEFAULT_DENOMINATOR,
-        ownerTradeFeeNumerator: 4,
+        ownerTradeFeeNumerator: 5,
         ownerTradeFeeDenominator: DEFAULT_DENOMINATOR,
         ownerWithdrawFeeNumerator: 0,
         ownerWithdrawFeeDenominator: DEFAULT_DENOMINATOR,
@@ -98,7 +98,7 @@ export const AddToLiquidity = () => {
                 B.setMint(item);
             }}
         />
-        {pool && <SupplyOverview pool={pool} />}
+        <SupplyOverview mintAddress={[A.mintAddress, B.mintAddress]} pool={pool} />
         {pool && <Button
             className="add-button"
             type="primary"

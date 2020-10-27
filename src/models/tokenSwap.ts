@@ -261,7 +261,7 @@ export const swapInstruction = (
 
   // optional depending on the build of token-swap program
   if (programOwner) {
-    keys.push({ pubkey: programOwner, isSigner: false, isWritable: false });
+    keys.push({ pubkey: programOwner, isSigner: false, isWritable: true });
   }
 
   const data = Buffer.alloc(dataLayout.span);
