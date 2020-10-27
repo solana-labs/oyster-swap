@@ -40,10 +40,12 @@ export const AddToLiquidity = () => {
       const components = [
         {
           account: A.account,
+          mintAddress: A.mintAddress,
           amount: A.convertAmount()
         },
         {
           account: B.account,
+          mintAddress: B.mintAddress,
           amount: B.convertAmount()
         }
       ];

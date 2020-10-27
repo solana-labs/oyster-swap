@@ -35,17 +35,18 @@ export const TradeEntry = () => {
   };
 
   const handleSwap = async () => {
-    if (A.account && B.account && A.mint && B.mint) {
+    if (A.account && B.mintAddress) {
       try {
         setPendingTx(true);
 
         const components = [
           {
             account: A.account,
+            mintAddress: A.mintAddress,
             amount: A.convertAmount()
           },
           {
-            account: B.account,
+            mintAddress: B.mintAddress,
             amount: B.convertAmount()
           }
         ];
