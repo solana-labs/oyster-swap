@@ -107,5 +107,5 @@ export function formatTokenAmount(
     return "";
   }
 
-  return `${[prefix]}${convert(account, mint, rate).toFixed(10)}${suffix}`;
+  return `${[prefix]}${convert(account, mint, rate).toFixed(6)}${suffix}`;
 }

@@ -236,7 +236,7 @@ export const CurrencyInput = (props: {
             props.onInputChange && props.onInputChange(userUiBalance())
           }
         >
-          Balance: {userUiBalance().toFixed(2)}
+          Balance: {userUiBalance().toFixed(6)}
         </div>
       </div>
       <div className="ccy-input-header" style={{ padding: "0px 10px 5px 7px" }}>
