@@ -16,7 +16,7 @@ export const AccountInfo = (props: {}) => {
   return (
     <div className="wallet-wrapper">
       <span>
-        {((account?.lamports || 0) / LAMPORTS_PER_SOL).toFixed(2)} SOL
+        {((account?.lamports || 0) / LAMPORTS_PER_SOL).toFixed(6)} SOL
       </span>
       <div className="wallet-key">
         {shortenAddress(`${wallet.publicKey}`)}

@@ -29,11 +29,15 @@ const { Option } = Select;
 
 export const useCurrencyPairState = () => {
   const connection = useConnection();
-  const {env} = useConnectionConfig();
+  const { env } = useConnectionConfig();
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
-  const [mintAddressA, setMintAddressA] = useState(PopularTokens[env].find(t => t.tokenSymbol === 'BTC')?.mintAddress || "");
-  const [mintAddressB, setMintAddressB] = useState(PopularTokens[env].find(t => t.tokenSymbol === 'USDT')?.mintAddress || "");
+  const [mintAddressA, setMintAddressA] = useState(
+    PopularTokens[env].find((t) => t.tokenSymbol === "BTC")?.mintAddress || ""
+  );
+  const [mintAddressB, setMintAddressB] = useState(
+    PopularTokens[env].find((t) => t.tokenSymbol === "USDT")?.mintAddress || ""
+  );
   const [lastTypedAccount, setLastTypedAccount] = useState("");
   const accountA = useAccountByMint(mintAddressA);
   const accountB = useAccountByMint(mintAddressB);
@@ -63,7 +67,7 @@ export const useCurrencyPairState = () => {
         pool
       );
       if (result !== undefined && Number.isFinite(result)) {
-        setDependent(result.toFixed(2));
+        setDependent(result.toFixed(6));
       } else {
         setDependent("");
       }

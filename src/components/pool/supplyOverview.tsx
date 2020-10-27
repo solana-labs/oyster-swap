@@ -45,7 +45,7 @@ const useMidPriceInUSD = (mint: string) => {
     const marketName = `${SERUM_TOKEN?.name}/USDC`;
     const marketInfo = MARKETS.find((m) => m.name === marketName);
 
-    if (SERUM_TOKEN?.name === "USDC") {
+    if (SERUM_TOKEN?.name === "USDC" || SERUM_TOKEN?.name === "USDT") {
       setIsBase(true);
       setPrice(1.0);
       return;
@@ -92,8 +92,14 @@ export const SupplyOverview = (props: {
   const connection = useConnection();
   const mintA = useMint(mintAddress[0]);
   const mintB = useMint(mintAddress[1]);
-  const accountA = useAccount(pool?.pubkeys.holdingAccounts[0]);
-  const accountB = useAccount(pool?.pubkeys.holdingAccounts[1]);
+  const accountX = useAccount(pool?.pubkeys.holdingAccounts[0]);
+  const accountY = useAccount(pool?.pubkeys.holdingAccounts[1]);
+
+  const [accountA, accountB] =
+    accountX?.info.mint.toBase58() === mintAddress[0]
+      ? [accountX, accountY]
+      : [accountY, accountX];
+
   const { env } = useConnectionConfig();
   const [data, setData] = useState<
     { name: string; value: number; color: string }[]
