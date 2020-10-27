@@ -80,9 +80,6 @@ export const SupplyOverview = (props: { mintAddress: string[], pool?: PoolInfo }
 
   const hasBothPrices = priceA !== undefined && priceB !== undefined;
 
-  console.log(priceA);
-  console.log(priceB);
-
   useEffect(() => {
     if (!pool || !accountA || !accountB) {
       return;

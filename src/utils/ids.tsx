@@ -17,8 +17,9 @@ export const PROGRAM_IDS = [
     {
         name: 'mainnet-beta',
         swap: () => ({
-            current: new PublicKey('6pr836RnCpXYGaBAbvEW8dQWXJem87511yeRTPYeCB9r'),
+            current: new PublicKey('2n2dsFSgmPcZ8jkmBZLGUM2nzuFqcBGQ3JEEj6RJJcEg'),
             legacy: [
+                new PublicKey('6pr836RnCpXYGaBAbvEW8dQWXJem87511yeRTPYeCB9r'),
                 new PublicKey('DnXyn8dAR5fJdqfBQciQ6gPSDNMQSTkQrPsR65ZF5qoW'),
                 new PublicKey('HYv7pNgHkkBGxfrnCre2pMgLpWm7LJPKxiyZVytN5HrM'),
             ],
@@ -27,7 +28,7 @@ export const PROGRAM_IDS = [
     {
         name: 'testnet',
         swap: () => ({
-            current: new PublicKey('BCwuoSdjocEMHg6tQc6A5CigKtLVHxpcuHhDBDumb7uk'),
+            current: new PublicKey('2n2dsFSgmPcZ8jkmBZLGUM2nzuFqcBGQ3JEEj6RJJcEg'),
             legacy: [
                 new PublicKey('9tdctNJuFsYZ6VrKfKEuwwbPp4SFdFw3jYBZU8QUtzeX'),
                 new PublicKey('CrRvVBS4Hmj47TPU3cMukurpmCUYUrdHYxTQBxncBGqw'),
