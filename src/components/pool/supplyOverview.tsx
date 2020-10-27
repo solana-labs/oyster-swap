@@ -41,6 +41,7 @@ const useMidPriceInUSD = (mint: string) => {
   const [isBase, setIsBase] = useState(false);
 
   useEffect(() => {
+    setPrice(undefined);
     const SERUM_TOKEN = TOKEN_MINTS.find((a) => a.address.toBase58() === mint);
     const marketName = `${SERUM_TOKEN?.name}/USDC`;
     const marketInfo = MARKETS.find((m) => m.name === marketName);
