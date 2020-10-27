@@ -28,6 +28,9 @@ const useMidPriceInUSD = (mint: string) => {
   const [isBase, setIsBase] = useState(false);
 
   useEffect(() => {
+    setIsBase(true);
+    setPrice(undefined);
+
     const SERUM_TOKEN = TOKEN_MINTS.find(a => a.address.toBase58() === mint);
     const marketName = `${SERUM_TOKEN?.name}/USDC`;
     const marketInfo = MARKETS.find(m => m.name === marketName);
@@ -54,9 +57,6 @@ const useMidPriceInUSD = (mint: string) => {
 
       if (bestBid.length > 0 && bestAsk.length > 0) {
         setPrice((bestBid[0][0] + bestAsk[0][0]) / 2.0);
-      } else {
-        // missing price
-        setPrice(undefined);
       }
     })();
   }, [connection, mint, setIsBase, setPrice]);
@@ -87,7 +87,7 @@ export const SupplyOverview = (props: { mintAddress: string[], pool?: PoolInfo }
   const hasBothPrices = priceA !== undefined && priceB !== undefined;
 
   useEffect(() => {
-    if (!pool || !accountA || !accountB) {
+    if (!mintAddress || !accountA || !accountB) {
       return;
     }
 
@@ -107,7 +107,7 @@ export const SupplyOverview = (props: { mintAddress: string[], pool?: PoolInfo }
 
       setData(chart);
     })();
-  }, [accountA, accountB, mintA, mintB, connection, env, pool, hasBothPrices, priceA, priceB])
+  }, [accountA, accountB, mintA, mintB, connection, env, mintAddress, hasBothPrices, priceA, priceB])
 
   if (!pool || !accountA || !accountB || data.length < 1) {
     return null;

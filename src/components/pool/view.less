@@ -1,7 +1,31 @@
+
 .pools-grid {
-    display: grid;
-    grid-template-columns: 1fr 1em 1em 1fr 1fr;
-    gap: 0.5em 1em;
+    display: flex;
+    flex-direction: column;
+}
+
+.pool-item-row {
+    display: flex;
+    position: relative;
+    width: 100%;
     align-items: center;
     text-align: right;
+    align-items: center;
+}
+
+.pool-item-row:hover {
+    cursor: pointer;
+    background-color: var(--row-highlight);
+}
+
+.pool-item-amount {
+    min-width: 100px;
+}
+
+.pool-item-type {
+    min-width: 20px;
+}
+
+.pool-item-name {
+    padding-right: 0.5em;
 }

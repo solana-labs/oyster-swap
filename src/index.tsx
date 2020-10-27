@@ -6,13 +6,16 @@ import * as serviceWorker from './serviceWorker';
 import { WalletProvider } from './utils/wallet';
 import { ConnectionProvider } from './utils/connection';
 import { AccountsProvider } from './utils/accounts';
+import { CurrencyPairProvider } from './utils/currencyPair';
 
 ReactDOM.render(
   <React.StrictMode>
     <ConnectionProvider>
       <WalletProvider>
         <AccountsProvider>
-          <App />
+          <CurrencyPairProvider>
+            <App />
+          </CurrencyPairProvider>
         </AccountsProvider>
       </WalletProvider>
     </ConnectionProvider>
