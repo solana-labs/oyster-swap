@@ -11,6 +11,7 @@ import { CurrencyInput, useCurrencyPairState } from '../currencyInput';
 import { DEFAULT_DENOMINATOR, PoolConfigCard } from './config';
 import './add.less';
 import { PoolConfig } from '../../models';
+import { SWAP_PROGRAM_OWNER_FEE_ADDRESS } from '../../utils/ids';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -57,6 +58,28 @@ export const AddToLiquidity = () => {
             });
         }
     };
+
+
+    const createPoolButton = SWAP_PROGRAM_OWNER_FEE_ADDRESS ?
+        <Button
+            className="add-button"
+            onClick={provideLiquidity}
+            disabled={pendingTx || !A.account || !B.account || A.account === B.account}
+            type="primary"
+            size="large">
+            Create Liquidity Pool
+            {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+        </Button> :
+        <Dropdown.Button
+            className="add-button"
+            onClick={provideLiquidity}
+            disabled={pendingTx || !A.account || !B.account || A.account === B.account}
+            type="primary"
+            size="large"
+            overlay={<PoolConfigCard options={options} setOptions={setOptions} />}>
+            Create Liquidity Pool
+            {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+        </Dropdown.Button>;
 
     return <div>
         <Popover trigger="hover" content={
@@ -108,15 +131,6 @@ export const AddToLiquidity = () => {
             Provide Liquidity
             {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
         </Button>}
-        {!pool && <Dropdown.Button
-            className="add-button"
-            onClick={provideLiquidity}
-            disabled={pendingTx || !A.account || !B.account || A.account === B.account}
-            type="primary"
-            size="large"
-            overlay={<PoolConfigCard options={options} setOptions={setOptions} />}>
-            Create Liquidity Pool
-                {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
-        </Dropdown.Button>}
+        {!pool && createPoolButton}
     </div>;
 };
