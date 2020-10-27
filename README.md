@@ -6,10 +6,9 @@ Any content produced by Solana, or developer resources that Solana provides, are
 
 App is using to enviroment variables that can be set before deployment:
 
-- `SWAP_PROGRAM_OWNER_FEE_ADDRESS` used to distribute fees to owner of the pool program (Note: this varibale reuqires special version of token-swap program)
 - `SWAP_HOST_FEE_ADDRESS` used to distribute fees to host of the application
 
-To inject varibles to the app, set the SWAP_PROGRAM_OWNER_FEE_ADDRESS and/or SWAP_HOST_FEE_ADDRESS environment variables to the addresses of your SOL accounts.
+To inject varibles to the app, set the SWAP_HOST_FEE_ADDRESS environment variable to the addresses of your SOL account.
 
 You may want to put these in local environment files (e.g. .env.development.local, .env.production.local). See the documentation on environment variables for more information.
 

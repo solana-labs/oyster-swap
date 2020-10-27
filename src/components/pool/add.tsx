@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { addLiquidity, usePoolForBasket } from "../../utils/pools";
-import { Button, Dropdown, Popover } from "antd";
+import { Button, Popover } from "antd";
 import { useWallet } from "../../utils/wallet";
 import { useConnection, useSlippageConfig } from "../../utils/connection";
 import { Spin } from "antd";
@@ -8,9 +8,9 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { notify } from "../../utils/notifications";
 import { SupplyOverview } from "./supplyOverview";
 import { CurrencyInput, useCurrencyPairState } from "../currencyInput";
-import { DEFAULT_DENOMINATOR, PoolConfigCard } from "./config";
+import { DEFAULT_DENOMINATOR } from "./config";
 import "./add.less";
-import { PoolConfig } from "../../models";
+import {PoolConfig} from "../../models";
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -21,7 +21,7 @@ export const AddToLiquidity = () => {
   const { A, B, setLastTypedAccount } = useCurrencyPairState();
   const pool = usePoolForBasket([A?.mintAddress, B?.mintAddress]);
   const { slippage } = useSlippageConfig();
-  const [options, setOptions] = useState<PoolConfig>({
+  const options: PoolConfig = {
     curveType: 0,
     tradeFeeNumerator: 25,
     tradeFeeDenominator: DEFAULT_DENOMINATOR,
@@ -29,7 +29,7 @@ export const AddToLiquidity = () => {
     ownerTradeFeeDenominator: DEFAULT_DENOMINATOR,
     ownerWithdrawFeeNumerator: 0,
     ownerWithdrawFeeDenominator: DEFAULT_DENOMINATOR,
-  });
+  };
 
   const provideLiquidity = async () => {
     if (A.account && B.account && A.mint && B.mint) {
@@ -112,7 +112,6 @@ export const AddToLiquidity = () => {
         mintAddress={[A.mintAddress, B.mintAddress]}
         pool={pool}
       />
-      {pool && (
         <Button
           className="add-button"
           type="primary"
@@ -122,25 +121,9 @@ export const AddToLiquidity = () => {
             pendingTx || !A.account || !B.account || A.account === B.account
           }
         >
-          Provide Liquidity
+            {pool ? 'Provide Liquidity' : 'Create Liquidity Pool'}
           {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
         </Button>
-      )}
-      {!pool && (
-        <Dropdown.Button
-          className="add-button"
-          onClick={provideLiquidity}
-          disabled={
-            pendingTx || !A.account || !B.account || A.account === B.account
-          }
-          type="primary"
-          size="large"
-          overlay={<PoolConfigCard options={options} setOptions={setOptions} />}
-        >
-          Create Liquidity Pool
-          {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
-        </Dropdown.Button>
-      )}
     </div>
   );
 };
