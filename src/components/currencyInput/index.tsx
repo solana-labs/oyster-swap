@@ -29,10 +29,11 @@ const { Option } = Select;
 
 export const useCurrencyPairState = () => {
   const connection = useConnection();
+  const {env} = useConnectionConfig();
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
-  const [mintAddressA, setMintAddressA] = useState("");
-  const [mintAddressB, setMintAddressB] = useState("");
+  const [mintAddressA, setMintAddressA] = useState(PopularTokens[env].find(t => t.tokenSymbol === 'BTC')?.mintAddress || "");
+  const [mintAddressB, setMintAddressB] = useState(PopularTokens[env].find(t => t.tokenSymbol === 'USDT')?.mintAddress || "");
   const [lastTypedAccount, setLastTypedAccount] = useState("");
   const accountA = useAccountByMint(mintAddressA);
   const accountB = useAccountByMint(mintAddressB);
@@ -229,7 +230,12 @@ export const CurrencyInput = (props: {
       <div className="ccy-input-header">
         <div className="ccy-input-header-left">{props.title}</div>
 
-        <div className="ccy-input-header-right">
+        <div
+          className="ccy-input-header-right"
+          onClick={(e) =>
+            props.onInputChange && props.onInputChange(userUiBalance())
+          }
+        >
           Balance: {userUiBalance().toFixed(2)}
         </div>
       </div>
