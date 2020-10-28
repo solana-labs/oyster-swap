@@ -1,9 +1,9 @@
 {
-  "short_name": "Swap | Solana",
-  "name": "Swap | Solana",
+  "short_name": "Swap | Serum",
+  "name": "Swap | Serum",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "icon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },

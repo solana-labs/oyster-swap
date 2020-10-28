@@ -1,54 +1,53 @@
 import { Numberu64 } from "@solana/spl-token-swap";
 import { PublicKey, Account, TransactionInstruction } from "@solana/web3.js";
-import * as BufferLayout from 'buffer-layout';
+import * as BufferLayout from "buffer-layout";
 
-export { TokenSwap } from '@solana/spl-token-swap';
+export { TokenSwap } from "@solana/spl-token-swap";
 
 /**
  * Layout for a public key
  */
-export const publicKey = (property: string = 'publicKey'): Object => {
+export const publicKey = (property: string = "publicKey"): Object => {
   return BufferLayout.blob(32, property);
 };
 
 /**
  * Layout for a 64bit unsigned value
  */
-export const uint64 = (property: string = 'uint64'): Object => {
+export const uint64 = (property: string = "uint64"): Object => {
   return BufferLayout.blob(8, property);
 };
 
-
 export const TokenSwapLayoutLegacyV0 = BufferLayout.struct([
-  BufferLayout.u8('isInitialized'),
-  BufferLayout.u8('nonce'),
-  publicKey('tokenAccountA'),
-  publicKey('tokenAccountB'),
-  publicKey('tokenPool'),
-  uint64('feesNumerator'),
-  uint64('feesDenominator')
+  BufferLayout.u8("isInitialized"),
+  BufferLayout.u8("nonce"),
+  publicKey("tokenAccountA"),
+  publicKey("tokenAccountB"),
+  publicKey("tokenPool"),
+  uint64("feesNumerator"),
+  uint64("feesDenominator"),
 ]);
 
 export const TokenSwapLayout: typeof BufferLayout.Structure = BufferLayout.struct(
   [
-    BufferLayout.u8('isInitialized'),
-    BufferLayout.u8('nonce'),
-    publicKey('tokenProgramId'),
-    publicKey('tokenAccountA'),
-    publicKey('tokenAccountB'),
-    publicKey('tokenPool'),
-    publicKey('mintA'),
-    publicKey('mintB'),
-    publicKey('feeAccount'),
-    BufferLayout.u8('curveType'),
-    uint64('tradeFeeNumerator'),
-    uint64('tradeFeeDenominator'),
-    uint64('ownerTradeFeeNumerator'),
-    uint64('ownerTradeFeeDenominator'),
-    uint64('ownerWithdrawFeeNumerator'),
-    uint64('ownerWithdrawFeeDenominator'),
-    BufferLayout.blob(16, 'padding'),
-  ],
+    BufferLayout.u8("isInitialized"),
+    BufferLayout.u8("nonce"),
+    publicKey("tokenProgramId"),
+    publicKey("tokenAccountA"),
+    publicKey("tokenAccountB"),
+    publicKey("tokenPool"),
+    publicKey("mintA"),
+    publicKey("mintB"),
+    publicKey("feeAccount"),
+    BufferLayout.u8("curveType"),
+    uint64("tradeFeeNumerator"),
+    uint64("tradeFeeDenominator"),
+    uint64("ownerTradeFeeNumerator"),
+    uint64("ownerTradeFeeDenominator"),
+    uint64("ownerWithdrawFeeNumerator"),
+    uint64("ownerWithdrawFeeDenominator"),
+    BufferLayout.blob(16, "padding"),
+  ]
 );
 
 export const createInitSwapInstruction = (
@@ -68,7 +67,7 @@ export const createInitSwapInstruction = (
   ownerTradeFeeNumerator: number,
   ownerTradeFeeDenominator: number,
   ownerWithdrawFeeNumerator: number,
-  ownerWithdrawFeeDenominator: number,
+  ownerWithdrawFeeDenominator: number
 ): TransactionInstruction => {
   const keys = [
     { pubkey: tokenSwapAccount.publicKey, isSigner: false, isWritable: true },
@@ -82,16 +81,16 @@ export const createInitSwapInstruction = (
   ];
 
   const commandDataLayout = BufferLayout.struct([
-    BufferLayout.u8('instruction'),
-    BufferLayout.u8('nonce'),
-    BufferLayout.u8('curveType'),
-    BufferLayout.nu64('tradeFeeNumerator'),
-    BufferLayout.nu64('tradeFeeDenominator'),
-    BufferLayout.nu64('ownerTradeFeeNumerator'),
-    BufferLayout.nu64('ownerTradeFeeDenominator'),
-    BufferLayout.nu64('ownerWithdrawFeeNumerator'),
-    BufferLayout.nu64('ownerWithdrawFeeDenominator'),
-    BufferLayout.blob(16, 'padding'),
+    BufferLayout.u8("instruction"),
+    BufferLayout.u8("nonce"),
+    BufferLayout.u8("curveType"),
+    BufferLayout.nu64("tradeFeeNumerator"),
+    BufferLayout.nu64("tradeFeeDenominator"),
+    BufferLayout.nu64("ownerTradeFeeNumerator"),
+    BufferLayout.nu64("ownerTradeFeeDenominator"),
+    BufferLayout.nu64("ownerWithdrawFeeNumerator"),
+    BufferLayout.nu64("ownerWithdrawFeeDenominator"),
+    BufferLayout.blob(16, "padding"),
   ]);
   let data = Buffer.alloc(1024);
   {
@@ -107,7 +106,7 @@ export const createInitSwapInstruction = (
         ownerWithdrawFeeNumerator,
         ownerWithdrawFeeDenominator,
       },
-      data,
+      data
     );
     data = data.slice(0, encodeLength);
   }
@@ -116,7 +115,7 @@ export const createInitSwapInstruction = (
     programId: swapProgramId,
     data,
   });
-}
+};
 
 export const depositInstruction = (
   tokenSwap: PublicKey,
@@ -131,13 +130,13 @@ export const depositInstruction = (
   tokenProgramId: PublicKey,
   poolTokenAmount: number | Numberu64,
   maximumTokenA: number | Numberu64,
-  maximumTokenB: number | Numberu64,
+  maximumTokenB: number | Numberu64
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
-    BufferLayout.u8('instruction'),
-    uint64('poolTokenAmount'),
-    uint64('maximumTokenA'),
-    uint64('maximumTokenB'),
+    BufferLayout.u8("instruction"),
+    uint64("poolTokenAmount"),
+    uint64("maximumTokenA"),
+    uint64("maximumTokenB"),
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
@@ -148,7 +147,7 @@ export const depositInstruction = (
       maximumTokenA: new Numberu64(maximumTokenA).toBuffer(),
       maximumTokenB: new Numberu64(maximumTokenB).toBuffer(),
     },
-    data,
+    data
   );
 
   const keys = [
@@ -167,7 +166,7 @@ export const depositInstruction = (
     programId: swapProgramId,
     data,
   });
-}
+};
 
 export const withdrawInstruction = (
   tokenSwap: PublicKey,
@@ -183,13 +182,13 @@ export const withdrawInstruction = (
   tokenProgramId: PublicKey,
   poolTokenAmount: number | Numberu64,
   minimumTokenA: number | Numberu64,
-  minimumTokenB: number | Numberu64,
+  minimumTokenB: number | Numberu64
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
-    BufferLayout.u8('instruction'),
-    uint64('poolTokenAmount'),
-    uint64('minimumTokenA'),
-    uint64('minimumTokenB'),
+    BufferLayout.u8("instruction"),
+    uint64("poolTokenAmount"),
+    uint64("minimumTokenA"),
+    uint64("minimumTokenB"),
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
@@ -200,7 +199,7 @@ export const withdrawInstruction = (
       minimumTokenA: new Numberu64(minimumTokenA).toBuffer(),
       minimumTokenB: new Numberu64(minimumTokenB).toBuffer(),
     },
-    data,
+    data
   );
 
   const keys = [
@@ -224,7 +223,7 @@ export const withdrawInstruction = (
     programId: swapProgramId,
     data,
   });
-}
+};
 
 export const swapInstruction = (
   tokenSwap: PublicKey,
@@ -239,12 +238,12 @@ export const swapInstruction = (
   tokenProgramId: PublicKey,
   amountIn: number | Numberu64,
   minimumAmountOut: number | Numberu64,
-  programOwner?: PublicKey,
+  programOwner?: PublicKey
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
-    BufferLayout.u8('instruction'),
-    uint64('amountIn'),
-    uint64('minimumAmountOut'),
+    BufferLayout.u8("instruction"),
+    uint64("amountIn"),
+    uint64("minimumAmountOut"),
   ]);
 
   const keys = [
@@ -271,7 +270,7 @@ export const swapInstruction = (
       amountIn: new Numberu64(amountIn).toBuffer(),
       minimumAmountOut: new Numberu64(minimumAmountOut).toBuffer(),
     },
-    data,
+    data
   );
 
   return new TransactionInstruction({
@@ -279,4 +278,4 @@ export const swapInstruction = (
     programId: swapProgramId,
     data,
   });
-}
+};

@@ -37,7 +37,9 @@
     "localnet:up": "rm client/util/store/config.json; set -x; solana-localnet down; set -e; solana-localnet up",
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
-    "deploy": "arweave deploy-dir build --key-file "
+    "predeploy": "git pull --ff-only && yarn && yarn build",
+    "deploy": "gh-pages -d build",
+    "deploy:ar": "arweave deploy-dir build --key-file "
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -56,14 +58,16 @@
   },
   "homepage": ".",
   "devDependencies": {
-    "@types/bs58": "^4.0.1",
-    "arweave-deploy": "^1.9.1",
     "@types/bn.js": "^4.11.6",
+    "@types/bs58": "^4.0.1",
     "@types/identicon.js": "^2.3.0",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.12.62",
     "@types/react": "^16.9.50",
     "@types/react-dom": "^16.9.8",
-    "@types/recharts": "^1.8.16"
+    "@types/recharts": "^1.8.16",
+    "arweave-deploy": "^1.9.1",
+    "gh-pages": "^3.1.0",
+    "prettier": "^2.1.2"
   }
 }

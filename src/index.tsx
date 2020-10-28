@@ -1,12 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
-import { WalletProvider } from './utils/wallet';
-import { ConnectionProvider } from './utils/connection';
-import { AccountsProvider } from './utils/accounts';
-import { CurrencyPairProvider } from './utils/currencyPair';
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+import * as serviceWorker from "./serviceWorker";
+import { WalletProvider } from "./utils/wallet";
+import { ConnectionProvider } from "./utils/connection";
+import { AccountsProvider } from "./utils/accounts";
+import { CurrencyPairProvider } from "./utils/currencyPair";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -20,7 +20,7 @@ ReactDOM.render(
       </WalletProvider>
     </ConnectionProvider>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want your app to work offline and load faster, you can change
