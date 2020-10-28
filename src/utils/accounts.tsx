@@ -27,7 +27,8 @@ class EventEmitter extends EventTarget {
 
 const accountEmitter = new EventEmitter();
 
-const mintCache = new Map<string, Promise<MintInfo>>();
+const pendingMintCalls = new Map<string, Promise<MintInfo>>();
+const mintCache = new Map<string, MintInfo>();
 const pendingAccountCalls = new Map<string, Promise<TokenAccount>>();
 const accountsCache = new Map<string, TokenAccount>();
 
@@ -37,19 +38,7 @@ const getAccountInfo = async (connection: Connection, pubKey: PublicKey) => {
     throw new Error("Failed to find mint account");
   }
 
-  const buffer = Buffer.from(info.data);
-
-  const data = deserializeAccount(buffer);
-
-  const details = {
-    pubkey: pubKey,
-    account: {
-      ...info,
-    },
-    info: data,
-  } as TokenAccount;
-
-  return details;
+  return tokenAccountFactory(pubKey, info);
 };
 
 const getMintInfo = async (connection: Connection, pubKey: PublicKey) => {
@@ -64,7 +53,7 @@ const getMintInfo = async (connection: Connection, pubKey: PublicKey) => {
 };
 
 export const cache = {
-  getAccount: async (connection: Connection, pubKey: string | PublicKey) => {
+  queryAccount: async (connection: Connection, pubKey: string | PublicKey) => {
     let id: PublicKey;
     if (typeof pubKey === "string") {
       id = new PublicKey(pubKey);
@@ -93,7 +82,17 @@ export const cache = {
 
     return query;
   },
-  getMint: async (connection: Connection, pubKey: string | PublicKey) => {
+  getAccount: (pubKey: string | PublicKey) => {
+    let key: string;
+    if (typeof pubKey !== 'string') {
+      key = pubKey.toBase58();
+    } else {
+      key = pubKey;
+    }
+
+    return accountsCache.get(key);
+  },
+  queryMint: async (connection: Connection, pubKey: string | PublicKey) => {
     let id: PublicKey;
     if (typeof pubKey === "string") {
       id = new PublicKey(pubKey);
@@ -101,16 +100,35 @@ export const cache = {
       id = pubKey;
     }
 
-    let mint = mintCache.get(id.toBase58());
+    const address = id.toBase58();
+    let mint = mintCache.get(address);
     if (mint) {
       return mint;
     }
 
-    let query = getMintInfo(connection, id);
+    let query = pendingMintCalls.get(address);
+    if (query) {
+      return query;
+    }
 
-    mintCache.set(id.toBase58(), query as any);
+    query = getMintInfo(connection, id).then((data) => {
+      pendingAccountCalls.delete(address);
+      mintCache.set(address, data);
+      return data;
+    }) as Promise<MintInfo>;
+    pendingAccountCalls.set(address, query as any);
 
     return query;
+  },
+  getMint: (pubKey: string | PublicKey) => {
+    let key: string;
+    if (typeof pubKey !== 'string') {
+      key = pubKey.toBase58();
+    } else {
+      key = pubKey;
+    }
+
+    return mintCache.get(key);
   },
 };
 
@@ -123,6 +141,23 @@ export const getCachedAccount = (
     }
   }
 };
+
+function tokenAccountFactory(pubKey: PublicKey, info: AccountInfo<Buffer>) {
+  const buffer = Buffer.from(info.data);
+
+
+  const data = deserializeAccount(buffer);
+
+  const details = {
+    pubkey: pubKey,
+    account: {
+      ...info,
+    },
+    info: data,
+  } as TokenAccount;
+
+  return details;
+}
 
 function wrapNativeAccount(
   pubkey: PublicKey,
@@ -277,7 +312,7 @@ export function AccountsProvider({ children = null as any }) {
             if (mintCache.has(id)) {
               const data = Buffer.from(info.accountInfo.data);
               const mint = deserializeMint(data);
-              mintCache.set(id, new Promise((resolve) => resolve(mint)));
+              mintCache.set(id, mint);
               accountEmitter.raiseAccountUpdated(id);
             }
 
@@ -313,6 +348,49 @@ export function useNativeAccount() {
   };
 }
 
+export const getMultipleAccounts = async (connection: any, keys: string[], commitment: string): Promise<(TokenAccount | MintInfo)[]> => {
+  const args = connection._buildArgs([keys], commitment, 'base64');
+
+  const unsafeRes = await connection._rpcRequest('getMultipleAccounts', args);
+  if (unsafeRes.error) {
+    throw new Error(
+      'failed to get info about account ' +
+      unsafeRes.error.message,
+    );
+  }
+
+  let value = null;
+  if (unsafeRes.result.value) {
+    const array = unsafeRes.result.value as AccountInfo<string[]>[];
+    return array.map((item, index) => {
+      const { data, ...rest } = item;
+
+      const obj = {
+        ...rest,
+        data: Buffer.from(data[0], 'base64'),
+      } as AccountInfo<Buffer>;
+
+      const pubkey = new PublicKey(keys[index]);
+      if (obj.data.length === AccountLayout.span) {
+        const account = tokenAccountFactory(pubkey, obj);
+        accountsCache.set(account.pubkey.toBase58(), account);
+        // TODO: raise event ?
+
+        return account;
+      } else if (obj.data.length === MintLayout.span) {
+        const mint = deserializeMint(obj.data);
+        mintCache.set(pubkey.toBase58(), mint);
+        return mint;
+      }
+
+      return obj;
+    }) as any[]
+  }
+
+  // TODO: fix
+  throw new Error();
+}
+
 export function useMint(id?: string) {
   const connection = useConnection();
   const [mint, setMint] = useState<MintInfo>();
@@ -323,7 +401,7 @@ export function useMint(id?: string) {
     }
 
     cache
-      .getMint(connection, id)
+      .queryMint(connection, id)
       .then(setMint)
       .catch((err) =>
         notify({
@@ -334,7 +412,7 @@ export function useMint(id?: string) {
     const onAccountEvent = (e: Event) => {
       const event = e as AccountUpdateEvent;
       if (event.id === id) {
-        cache.getMint(connection, id).then(setMint);
+        cache.queryMint(connection, id).then(setMint);
       }
     };
 
@@ -369,7 +447,7 @@ export function useAccount(pubKey?: PublicKey) {
           return;
         }
 
-        const acc = await cache.getAccount(connection, key).catch((err) =>
+        const acc = await cache.queryAccount(connection, key).catch((err) =>
           notify({
             message: err.message,
             type: "error",
