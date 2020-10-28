@@ -32,6 +32,8 @@ const renderCustomizedLabel = (props: any, data: any) => {
   );
 };
 
+const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
+
 const useMidPriceInUSD = (mint: string) => {
   const connection = useMemo(
     () => new Connection(ENDPOINTS[0].endpoint, "recent"),
@@ -41,12 +43,14 @@ const useMidPriceInUSD = (mint: string) => {
   const [isBase, setIsBase] = useState(false);
 
   useEffect(() => {
+    setIsBase(true);
     setPrice(undefined);
+
     const SERUM_TOKEN = TOKEN_MINTS.find((a) => a.address.toBase58() === mint);
     const marketName = `${SERUM_TOKEN?.name}/USDC`;
     const marketInfo = MARKETS.find((m) => m.name === marketName);
 
-    if (SERUM_TOKEN?.name === "USDC" || SERUM_TOKEN?.name === "USDT") {
+    if (STABLE_COINS.has(SERUM_TOKEN?.name || "")) {
       setIsBase(true);
       setPrice(1.0);
       return;
@@ -73,17 +77,12 @@ const useMidPriceInUSD = (mint: string) => {
 
       if (bestBid.length > 0 && bestAsk.length > 0) {
         setPrice((bestBid[0][0] + bestAsk[0][0]) / 2.0);
-      } else {
-        // missing price
-        setPrice(undefined);
       }
     })();
   }, [connection, mint, setIsBase, setPrice]);
 
   return { price, isBase };
 };
-
-// TODO: add imbalance overview based on serum mid-price
 
 export const SupplyOverview = (props: {
   mintAddress: string[];
@@ -103,7 +102,6 @@ export const SupplyOverview = (props: {
       ? pool?.pubkeys.holdingAccounts[1]
       : pool?.pubkeys.holdingAccounts[0]
   );
-
   const { env } = useConnectionConfig();
   const [data, setData] = useState<
     { name: string; value: number; color: string }[]
@@ -114,7 +112,7 @@ export const SupplyOverview = (props: {
   const hasBothPrices = priceA !== undefined && priceB !== undefined;
 
   useEffect(() => {
-    if (!pool || !accountA || !accountB) {
+    if (!mintAddress || !accountA || !accountB) {
       return;
     }
 
@@ -141,7 +139,7 @@ export const SupplyOverview = (props: {
     mintB,
     connection,
     env,
-    pool,
+    mintAddress,
     hasBothPrices,
     priceA,
     priceB,

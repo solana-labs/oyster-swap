@@ -153,7 +153,7 @@ export const swap = async (
   SLIPPAGE: number,
   pool?: PoolInfo
 ) => {
-  if (!pool) {
+  if (!pool || !components[0].account) {
     notify({
       type: "error",
       message: `Pool doesn't exsist.`,
@@ -206,7 +206,7 @@ export const swap = async (
     instructions,
     cleanupInstructions,
     accountRentExempt,
-    components[1].account.info.mint,
+    new PublicKey(components[1].mintAddress),
     signers
   );
 
@@ -534,10 +534,14 @@ async function _addLiquidityExistingPool(
   const reserve0 = accountA.info.amount.toNumber();
   const reserve1 = accountB.info.amount.toNumber();
   const fromA =
-    accountA.info.mint.toBase58() === components[0].account.info.mint.toBase58()
+    accountA.info.mint.toBase58() === components[0].mintAddress
       ? components[0]
       : components[1];
   const fromB = fromA === components[0] ? components[1] : components[0];
+
+  if (!fromA.account || !fromB.account) {
+    throw new Error("Missing account info.");
+  }
 
   const supply = poolMint.supply.toNumber();
   const authority = poolMint.mintAuthority;
@@ -759,6 +763,15 @@ async function _addLiquidityNewPool(
     type: "warn",
   });
 
+  if (components.some((c) => !c.account)) {
+    notify({
+      message: "You need to have balance for all legs in the basket...",
+      description: "Please review inputs.",
+      type: "error",
+    });
+    return;
+  }
+
   let instructions: TransactionInstruction[] = [];
   let cleanupInstructions: TransactionInstruction[] = [];
 
@@ -804,6 +817,10 @@ async function _addLiquidityNewPool(
   let signers: Account[] = [];
 
   components.forEach((leg) => {
+    if (!leg.account) {
+      return;
+    }
+
     const mintPublicKey = leg.account.info.mint;
     // component account to store tokens I of N in liquidity poll
     holdingAccounts.push(
@@ -877,6 +894,10 @@ async function _addLiquidityNewPool(
   );
 
   components.forEach((leg, i) => {
+    if (!leg.account) {
+      return;
+    }
+
     // create temporary account for wrapped sol to perform transfer
     const from = getWrappedAccount(
       instructions,
