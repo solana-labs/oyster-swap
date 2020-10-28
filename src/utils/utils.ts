@@ -96,6 +96,20 @@ export function convert(
   return (account.info.amount?.toNumber() / precision) * rate;
 }
 
+var SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
+
+const abbreviateNumber = (number: number, precision: number) => {
+  let tier = Math.log10(number) / 3 | 0;
+  let scaled = number;
+  let suffix = SI_SYMBOL[tier];
+  if (tier !== 0) {
+    let scale = Math.pow(10, tier * 3);
+    scaled = number / scale;
+  }
+
+  return scaled.toFixed(precision) + suffix;
+}
+
 export function formatTokenAmount(
   account?: TokenAccount,
   mint?: MintInfo,
@@ -107,5 +121,5 @@ export function formatTokenAmount(
     return "";
   }
 
-  return `${[prefix]}${convert(account, mint, rate).toFixed(6)}${suffix}`;
+  return `${[prefix]}${abbreviateNumber(convert(account, mint, rate), 6)}${suffix}`;
 }
