@@ -1,13 +1,15 @@
 import { Button, Spin } from 'antd';
 import React, { useState } from 'react';
-import { useConnection, useSlippageConfig } from '../../utils/connection';
+import { useConnection, useConnectionConfig, useSlippageConfig } from '../../utils/connection';
 import { useWallet } from '../../utils/wallet';
 import { CurrencyInput } from './../currencyInput';
 import { LoadingOutlined } from '@ant-design/icons';
 import { swap, usePoolForBasket } from '../../utils/pools';
 import { notify } from '../../utils/notifications';
 import { useCurrencyPairState } from './../../utils/currencyPair';
+import { generateActionLabel, POOL_NOT_AVAILABLE, SWAP_LABEL } from './../labels';
 import './trade.less';
+import { getTokenName } from '../../utils/utils';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -15,15 +17,15 @@ const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 // Compute price breakdown with/without fee
 // Show slippage
 // Show fee information
-// TODO: destination account shouldnt be required
 
 export const TradeEntry = () => {
-  const { wallet } = useWallet();
+  const { wallet, connected } = useWallet();
   const connection = useConnection();
   const [pendingTx, setPendingTx] = useState(false);
   const { A, B, setLastTypedAccount } = useCurrencyPairState();
   const pool = usePoolForBasket([A?.mintAddress, B?.mintAddress]);
   const { slippage } = useSlippageConfig();
+  const { env } = useConnectionConfig();
 
   const swapAccounts = () => {
     const tempMint = A.mintAddress;
@@ -99,10 +101,16 @@ export const TradeEntry = () => {
         }}
       />
     </div>
-    <Button className="trade-button" type="primary" size="large" onClick={handleSwap} style={{ width: '100%' }}
-      disabled={pendingTx || !A.account || !B.mintAddress || A.account === B.account}>
-      Swap
-            {pendingTx && <Spin indicator={antIcon} className="trade-spinner" />}
+    <Button className="trade-button" type="primary" size="large" onClick={connected ? handleSwap : wallet.connect} style={{ width: '100%' }}
+      disabled={connected && (pendingTx || !A.account || !B.mintAddress || A.account === B.account || !A.sufficientBalance() || !pool)}>
+      {generateActionLabel(
+        !pool ? POOL_NOT_AVAILABLE(getTokenName(env, A.mintAddress), getTokenName(env, B.mintAddress)) : SWAP_LABEL,
+        connected,
+        env,
+        A,
+        B,
+        true)}
+      {pendingTx && <Spin indicator={antIcon} className="trade-spinner" />}
     </Button>
   </>;
 }

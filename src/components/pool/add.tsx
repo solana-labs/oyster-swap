@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { addLiquidity, usePoolForBasket } from '../../utils/pools';
 import { Button, Dropdown, Popover } from 'antd';
 import { useWallet } from '../../utils/wallet';
-import { useConnection, useSlippageConfig } from '../../utils/connection';
+import { useConnection, useConnectionConfig, useSlippageConfig } from '../../utils/connection';
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
@@ -12,18 +12,19 @@ import { DEFAULT_DENOMINATOR, PoolConfigCard } from './config';
 import './add.less';
 import { PoolConfig } from '../../models';
 import { SWAP_PROGRAM_OWNER_FEE_ADDRESS } from '../../utils/ids';
-
 import { useCurrencyPairState } from './../../utils/currencyPair';
+import { CREATE_POOL_LABEL, ADD_LIQUIDITY_LABEL, generateActionLabel } from './../labels';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 export const AddToLiquidity = () => {
-  const { wallet } = useWallet();
+  const { wallet, connected } = useWallet();
   const connection = useConnection();
   const [pendingTx, setPendingTx] = useState(false);
   const { A, B, setLastTypedAccount } = useCurrencyPairState();
   const pool = usePoolForBasket([A?.mintAddress, B?.mintAddress]);
   const { slippage } = useSlippageConfig();
+  const { env } = useConnectionConfig();
   const [options, setOptions] = useState<PoolConfig>({
     curveType: 0,
     tradeFeeNumerator: 25,
@@ -34,7 +35,7 @@ export const AddToLiquidity = () => {
     ownerWithdrawFeeDenominator: DEFAULT_DENOMINATOR,
   })
 
-  const provideLiquidity = async () => {
+  const executeAction = !connected ? wallet.connect : async () => {
     if (A.account && B.account && A.mint && B.mint) {
       setPendingTx(true);
       const components = [
@@ -63,27 +64,29 @@ export const AddToLiquidity = () => {
     }
   };
 
+  const hasSufficientBalance = A.sufficientBalance() && B.sufficientBalance();
 
   const createPoolButton = SWAP_PROGRAM_OWNER_FEE_ADDRESS ?
     <Button
       className="add-button"
-      onClick={provideLiquidity}
-      disabled={pendingTx || !A.account || !B.account || A.account === B.account}
+      onClick={executeAction}
+      disabled={connected && (pendingTx || !A.account || !B.account || A.account === B.account)}
       type="primary"
       size="large">
-      Create Liquidity Pool
-            {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+      {generateActionLabel(ADD_LIQUIDITY_LABEL, connected, env, A, B)}
+      {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
     </Button> :
     <Dropdown.Button
       className="add-button"
-      onClick={provideLiquidity}
-      disabled={pendingTx || !A.account || !B.account || A.account === B.account}
+      onClick={executeAction}
+      disabled={connected && (pendingTx || !A.account || !B.account || A.account === B.account)}
       type="primary"
       size="large"
       overlay={<PoolConfigCard options={options} setOptions={setOptions} />}>
-      Create Liquidity Pool
-            {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
-    </Dropdown.Button>;
+      {generateActionLabel(CREATE_POOL_LABEL, connected, env, A, B)}
+      {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+    </Dropdown.Button>
+
 
   return <div>
     <Popover trigger="hover" content={
@@ -130,10 +133,10 @@ export const AddToLiquidity = () => {
       className="add-button"
       type="primary"
       size="large"
-      onClick={provideLiquidity}
-      disabled={pendingTx || !A.account || !B.account || A.account === B.account}>
-      Provide Liquidity
-            {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
+      onClick={executeAction}
+      disabled={connected && (pendingTx || !A.account || !B.account || A.account === B.account || !hasSufficientBalance)}>
+      {generateActionLabel(ADD_LIQUIDITY_LABEL, connected, env, A, B)}
+      {pendingTx && <Spin indicator={antIcon} className="add-spinner" />}
     </Button>}
     {!pool && createPoolButton}
   </div>;

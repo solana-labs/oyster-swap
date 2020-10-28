@@ -4,8 +4,9 @@ import { useMint, useAccountByMint } from './accounts';
 import { MintInfo } from '@solana/spl-token';
 import { useConnection } from './connection';
 import { TokenAccount } from '../models';
+import { convert } from './utils';
 
-interface CurrencyContextState {
+export interface CurrencyContextState {
   mintAddress: string;
   account?: TokenAccount;
   mint?: MintInfo;
@@ -13,9 +14,10 @@ interface CurrencyContextState {
   setAmount: (val: string) => void;
   setMint: (mintAddress: string) => void;
   convertAmount: () => number;
+  sufficientBalance: () => boolean;
 }
 
-interface CurrencyPairContextState {
+export interface CurrencyPairContextState {
   A: CurrencyContextState;
   B: CurrencyContextState;
   setLastTypedAccount: (mintAddress: string) => void;
@@ -79,6 +81,7 @@ export function CurrencyPairProvider({ children = null as any }) {
           setAmount: setAmountA,
           setMint: setMintAddressA,
           convertAmount: () => convertAmount(amountA, mintA),
+          sufficientBalance: () => accountA !== undefined && convert(accountA, mintA) >= parseFloat(amountA),
         },
         B: {
           mintAddress: mintAddressB,
@@ -88,6 +91,7 @@ export function CurrencyPairProvider({ children = null as any }) {
           setAmount: setAmountB,
           setMint: setMintAddressB,
           convertAmount: () => convertAmount(amountB, mintB),
+          sufficientBalance: () => accountB !== undefined && convert(accountB, mintB) >= parseFloat(amountB),
         },
         setLastTypedAccount,
       }}
