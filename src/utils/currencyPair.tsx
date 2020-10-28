@@ -2,9 +2,10 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { calculateDependentAmount, usePoolForBasket } from "./pools";
 import { useMint, useAccountByMint } from "./accounts";
 import { MintInfo } from "@solana/spl-token";
-import { useConnection } from "./connection";
+import {useConnection, useConnectionConfig} from "./connection";
 import { TokenAccount } from "../models";
 import { convert } from "./utils";
+import PopularTokens from "../utils/token-list.json";
 
 export interface CurrencyContextState {
   mintAddress: string;
@@ -29,10 +30,15 @@ const CurrencyPairContext = React.createContext<CurrencyPairContextState | null>
 
 export function CurrencyPairProvider({ children = null as any }) {
   const connection = useConnection();
+  const { env } = useConnectionConfig();
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
-  const [mintAddressA, setMintAddressA] = useState("");
-  const [mintAddressB, setMintAddressB] = useState("");
+  const [mintAddressA, setMintAddressA] = useState(
+    PopularTokens[env].find((t) => t.tokenSymbol === "BTC")?.mintAddress || ""
+  );
+  const [mintAddressB, setMintAddressB] = useState(
+    PopularTokens[env].find((t) => t.tokenSymbol === "USDT")?.mintAddress || ""
+  );
   const [lastTypedAccount, setLastTypedAccount] = useState("");
   const accountA = useAccountByMint(mintAddressA);
   const accountB = useAccountByMint(mintAddressB);
