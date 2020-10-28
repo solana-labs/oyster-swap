@@ -287,7 +287,6 @@ export const addLiquidity = async (
       components,
       connection,
       wallet,
-      slippage
     );
   }
 };
@@ -500,12 +499,14 @@ export const useOwnedPools = () => {
     .flat();
 };
 
+// Allow for this much price movement in the pool before adding liquidity to the pool aborts
+const SLIPPAGE = 0.0050
+
 async function _addLiquidityExistingPool(
   pool: PoolInfo,
   components: LiquidityComponent[],
   connection: Connection,
   wallet: any,
-  SLIPPAGE: number
 ) {
   notify({
     message: "Adding Liquidity...",
