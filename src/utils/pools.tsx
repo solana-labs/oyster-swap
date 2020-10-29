@@ -1,5 +1,6 @@
 import {
   Account,
+  AccountInfo,
   Connection,
   PublicKey,
   SystemProgram,
@@ -382,16 +383,27 @@ export const usePools = () => {
           return result;
         });
 
+      const toQuery = poolsArray.map(p => [
+        ...p.pubkeys.holdingAccounts.map(h => h.toBase58()),
+        ...p.pubkeys.holdingMints.map(h => h.toBase58()),
+        p.pubkeys.feeAccount?.toBase58(), // used to calculate volume aproximation
+        p.pubkeys.mint.toBase58(),
+      ].filter(p => p) as string[]).flat();
+
       // This will pre-cache all accounts used by pools
       // All those accounts are updated whenever there is a change
-      await Promise.all(
-        chunks(
-          poolsArray.map(p => [
-            ...p.pubkeys.holdingAccounts.map(h => h.toBase58()),
-            ...p.pubkeys.holdingMints.map(h => h.toBase58()),
-            p.pubkeys.mint.toBase58(),
-          ]).flat(), 99
-        ).map(chunk => getMultipleAccounts(connection, chunk, 'single')));
+      await getMultipleAccounts(connection, toQuery, 'single').then(({ keys, array }) => {
+        return array.map((obj, index) => {
+          const pubKey = new PublicKey(keys[index]);
+          if (obj.data.length === AccountLayout.span) {
+            return cache.addAccount(pubKey, obj);
+          } else if (obj.data.length === MintLayout.span) {
+            return cache.addMint(pubKey, obj);
+          }
+
+          return obj;
+        }) as any[]
+      });
 
       return poolsArray;
     };

@@ -38,7 +38,8 @@
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
     "predeploy": "git pull --ff-only && yarn && yarn build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "deploy:ar": "arweave deploy-dir build --key-file "
   },
   "eslintConfig": {
     "extends": "react-app"

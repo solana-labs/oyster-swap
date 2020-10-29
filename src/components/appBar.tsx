@@ -3,7 +3,7 @@ import { Button, Menu, Popover } from "antd";
 import { PoolAccounts } from "./pool/view";
 import { useWallet } from "../utils/wallet";
 import { AccountInfo } from "./accountInfo";
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom';
 
 export const AppBar = (props: { left?: JSX.Element, right?: JSX.Element }) => {
   const { connected, wallet } = useWallet();
@@ -15,10 +15,18 @@ export const AppBar = (props: { left?: JSX.Element, right?: JSX.Element }) => {
         <div className="App-logo" />
         <Menu mode="horizontal" selectedKeys={[location.pathname]}>
           <Menu.Item key="/">
-            <a href={"/#"}>Swap</a>
+            <Link
+              to={{
+                pathname: "/",
+              }}
+            >Swap</Link>
           </Menu.Item>
           <Menu.Item key="/info">
-            <a href={"/#/info"}>Charts</a>
+            <Link
+              to={{
+                pathname: "/info",
+              }}
+            >Charts</Link>
           </Menu.Item>
           <Menu.Item key="trade">
             <a

@@ -83,6 +83,8 @@ export function isKnownMint(env: ENV, mintAddress: string) {
   return !!AddressToToken.get(env)?.get(mintAddress);
 }
 
+export const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
+
 export function chunks<T>(array: T[], size: number): T[][] {
   return Array.apply<number, T[], T[][]>(0, new Array(Math.ceil(array.length / size))).map((_, index) => array.slice(index * size, (index + 1) * size))
 }

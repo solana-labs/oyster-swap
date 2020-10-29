@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card } from "antd";
-import { getTokenName, formatTokenAmount, convert } from "../../utils/utils";
+import { getTokenName, formatTokenAmount, convert, STABLE_COINS } from "../../utils/utils";
 import { PieChart, Pie, Cell } from "recharts";
 import { useMint, useAccount } from "../../utils/accounts";
 import {
@@ -31,8 +31,6 @@ const renderCustomizedLabel = (props: any, data: any) => {
     </text>
   );
 };
-
-const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
 
 const useMidPriceInUSD = (mint: string) => {
   const connection = useMemo(

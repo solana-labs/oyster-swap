@@ -2,10 +2,11 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { calculateDependentAmount, usePoolForBasket } from "./pools";
 import { useMint, useAccountByMint } from "./accounts";
 import { MintInfo } from "@solana/spl-token";
-import {useConnection, useConnectionConfig} from "./connection";
+import { ENV, useConnection, useConnectionConfig } from "./connection";
 import { TokenAccount } from "../models";
 import { convert } from "./utils";
 import PopularTokens from "../utils/token-list.json";
+import { useHistory, useLocation } from "react-router-dom";
 
 export interface CurrencyContextState {
   mintAddress: string;
@@ -33,18 +34,48 @@ export function CurrencyPairProvider({ children = null as any }) {
   const { env } = useConnectionConfig();
   const [amountA, setAmountA] = useState("");
   const [amountB, setAmountB] = useState("");
-  const [mintAddressA, setMintAddressA] = useState(
-    PopularTokens[env].find((t) => t.tokenSymbol === "BTC")?.mintAddress || ""
-  );
-  const [mintAddressB, setMintAddressB] = useState(
-    PopularTokens[env].find((t) => t.tokenSymbol === "USDT")?.mintAddress || ""
-  );
+  const history = useHistory();
+  const location = useLocation();
+  const [mintAddressA, setMintAddressA] = useState("");
+  const [mintAddressB, setMintAddressB] = useState("");
   const [lastTypedAccount, setLastTypedAccount] = useState("");
   const accountA = useAccountByMint(mintAddressA);
   const accountB = useAccountByMint(mintAddressB);
   const mintA = useMint(mintAddressA);
   const mintB = useMint(mintAddressB);
   const pool = usePoolForBasket([mintAddressA, mintAddressB]);
+
+  // updates browser history on token changes
+  useEffect(() => {
+    // set history
+    const base = PopularTokens[env].find((t) => t.mintAddress === mintAddressA)?.tokenSymbol;
+    const quote = PopularTokens[env].find((t) => t.mintAddress === mintAddressB)?.tokenSymbol;
+
+    if (base && quote) {
+      history.push({
+        pathname: '/',
+        search: `?pair=${base}-${quote}`,
+      })
+    } else {
+      if (mintAddressA && mintAddressB) {
+        history.push({
+          pathname: '/',
+          search: ``,
+        });
+      }
+    }
+  }, [mintAddressA, mintAddressB])
+
+  // Updates tokens on location change
+  useEffect(() => {
+    if (!location.search && mintAddressA && mintAddressB) {
+      return;
+    }
+
+    let { defaultBase, defaultQuote } = getDefaultTokens(env, location.search);
+    setMintAddressA(PopularTokens[env].find((t) => t.tokenSymbol === defaultBase)?.mintAddress || '');
+    setMintAddressB(PopularTokens[env].find((t) => t.tokenSymbol === defaultQuote)?.mintAddress || '');
+  }, [location, location.search, setMintAddressA, setMintAddressB]);
 
   const calculateDependent = useCallback(async () => {
     if (pool && mintAddressA && mintAddressB) {
@@ -132,3 +163,34 @@ export const useCurrencyPairState = () => {
   const context = useContext(CurrencyPairContext);
   return context as CurrencyPairContextState;
 };
+function getDefaultTokens(env: ENV, search: string) {
+  let defaultBase = 'BTC';
+  let defaultQuote = 'USDT';
+
+  console.log(search);
+
+  const nameToToken = (PopularTokens[env] as any[]).reduce((map, item) => {
+    map.set(item.tokenSymbol, item);
+    return map;
+  }, new Map<string, any>());
+
+  if (search) {
+    const urlParams = new URLSearchParams(search);
+    const pair = urlParams.get('pair');
+    if (pair) {
+      let items = pair.split('-');
+
+      if (items.length > 1) {
+        if (nameToToken.has(items[0])) {
+          defaultBase = items[0];
+        }
+
+        if (nameToToken.has(items[1])) {
+          defaultQuote = items[1];
+        }
+      }
+    }
+  }
+  return { defaultBase, defaultQuote };
+}
+
