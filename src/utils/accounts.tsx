@@ -435,6 +435,11 @@ export function AccountsProvider({ children = null as any }) {
 
             accountEmitter.raiseAccountUpdated(id);
           }
+
+          if (genericCache.has(id)) {
+            cache.add(new PublicKey(id), info.accountInfo);
+          }
+
         },
         "singleGossip"
       );

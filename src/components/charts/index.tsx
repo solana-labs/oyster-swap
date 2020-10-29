@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, Popover, Table } from "antd";
 import { TradeEntry } from "./../trade";
 import { AddToLiquidity } from "./../pool/add";
 import { useWallet } from "./../../utils/wallet";
 import { AppBar } from './../appBar';
 import { List } from "antd/lib/form/Form";
-import { usePools } from "../../utils/pools";
+import { useOwnedPools, usePools } from "../../utils/pools";
 import { cache, getCachedAccount, getMultipleAccounts, MintParser, ParsedAccountBase, useCachedPool } from "../../utils/accounts";
 import { convert, getPoolName, STABLE_COINS } from "../../utils/utils";
 import { useConnection, useConnectionConfig } from "../../utils/connection";
@@ -13,8 +13,22 @@ import { Settings } from "../settings";
 import { SettingOutlined } from "@ant-design/icons";
 import { PoolIcon, TokenIcon } from "../tokenIcon";
 import { Market, MARKETS, Orderbook, TOKEN_MINTS } from "@project-serum/serum";
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import './styles.less';
+
+const FlashText = (props: { text: string, val: number }) => {
+  const [activeClass, setActiveClass] = useState('');
+  const [value, setValue] = useState(props.val);
+  useEffect(() => {
+    if (props.val !== value) {
+      setActiveClass(props.val > value ? 'flash-positive' : 'flash-negative');
+
+      setTimeout(() => setActiveClass(''), 200);
+    }
+  }, [props.text, props.val, value]);
+
+  return <span className={activeClass}>{props.text}</span>;
+};
 
 const OrderBookParser = (id: PublicKey, acc: AccountInfo<Buffer>) => {
   const decoded = Orderbook.LAYOUT.decode(acc.data);
@@ -28,6 +42,40 @@ const OrderBookParser = (id: PublicKey, acc: AccountInfo<Buffer>) => {
   } as ParsedAccountBase;
 
   return details;
+}
+
+const getMidPrice = (marketAddress: string, mintAddress: string) => {
+  const SERUM_TOKEN = TOKEN_MINTS.find((a) => a.address.toBase58() === mintAddress);
+
+  if (STABLE_COINS.has(SERUM_TOKEN?.name || "")) {
+    return 1.0;
+  }
+
+  const marketInfo = cache.get(marketAddress);
+  if (!marketInfo) {
+    return 0.0;
+  }
+
+  const decodedMarket = marketInfo.info;
+  const baseMintDecimals = cache.get(decodedMarket.baseMint)?.info.decimals || 0;
+  const quoteMintDecimals = cache.get(decodedMarket.quoteMint)?.info.decimals || 0;
+
+  const market = new Market(decodedMarket, baseMintDecimals, quoteMintDecimals, undefined, decodedMarket.programId);
+
+  const bids = cache.get(decodedMarket.bids)?.info;
+  const asks = cache.get(decodedMarket.asks)?.info;
+
+  const bidsBook = new Orderbook(market, bids.accountFlags, bids.slab);
+  const asksBook = new Orderbook(market, asks.accountFlags, asks.slab);
+
+  const bestBid = bidsBook.getL2(1);
+  const bestAsk = asksBook.getL2(1);
+
+  if (bestBid.length > 0 && bestAsk.length > 0) {
+    return (bestBid[0][0] + bestAsk[0][0]) / 2.0;
+  }
+
+  return 0;
 }
 
 interface SerumMarket {
@@ -56,15 +104,21 @@ interface Totals {
 
 export const ChartsView = (props: {}) => {
   const { connected, wallet } = useWallet();
-  const connection = useConnection();
-  const { env } = useConnectionConfig();
+  const { env, endpoint } = useConnectionConfig();
   const { pools } = useCachedPool();
   const [dataSource, setDataSource] = useState<any[]>([]);
   const [totals, setTotals] = useState<Totals>({ liquidity: 0, volume: 0, fees: 0 });
 
-  // TODO: create cache object with layout type, get, query, add
-  // example: cache.account.get()
+  // separate connection for market updates
+  const connection = useMemo(() => new Connection(endpoint, "recent"), [
+    endpoint,
+  ]);
 
+  // const { ownedPools } = useOwnedPools();
+
+  // TODO: create cache object with layout type, get, query, add
+
+  // Updates total values
   useEffect(() => {
     setTotals(dataSource.reduce((acc, item) => {
       acc.liquidity = acc.liquidity + item.liquidity;
@@ -94,96 +148,9 @@ export const ChartsView = (props: {}) => {
       return acc;
     }, new Map<string, SerumMarket>());
 
-    (async () => {
-      const toQuery = new Set<string>();
-      await getMultipleAccounts(connection, [...marketsCache.values()].map(m => m.marketInfo.address.toBase58()), 'single')
-        .then(({ keys, array }) => {
-          return array.map((item, index) => {
-            const marketAddress = keys[index];
-            const mintAddress = reverseSerumMarketCache.get(marketAddress);
-            if (mintAddress) {
-              const market = marketsCache.get(mintAddress);
+    let timer = 0;
 
-              if (market) {
-                const programId = market.marketInfo.programId;
-                const id = market.marketInfo.address;
-                const decoded = cache.add(id, item, (id, acc) => {
-                  const decoded = Market.getLayout(programId).decode(acc.data);
-
-                  const details = {
-                    pubkey: id,
-                    account: {
-                      ...acc,
-                    },
-                    info: decoded,
-                  } as ParsedAccountBase;
-
-                  return details;
-                })
-
-
-                cache.registerParser(decoded.info.baseMint, MintParser);
-                cache.registerParser(decoded.info.quoteMint, MintParser);
-
-                toQuery.add(decoded.info.baseMint.toBase58());
-                toQuery.add(decoded.info.quoteMint.toBase58());
-
-
-                cache.registerParser(decoded.info.bids, OrderBookParser);
-                cache.registerParser(decoded.info.asks, OrderBookParser);
-
-                toQuery.add(decoded.info.bids.toBase58());
-                toQuery.add(decoded.info.asks.toBase58());
-              }
-            }
-
-            return item;
-
-          });
-        });
-
-      await getMultipleAccounts(connection, [...toQuery.keys()], 'single').then(({ keys, array }) => {
-        return array.map((item, index) => {
-          const address = keys[index];
-          return cache.add(new PublicKey(address), item);
-        })
-      });
-
-
-      const getMidPrice = (mintAddress: string) => {
-        const SERUM_TOKEN = TOKEN_MINTS.find((a) => a.address.toBase58() === mintAddress);
-
-        if (STABLE_COINS.has(SERUM_TOKEN?.name || "")) {
-          return 1.0;
-        }
-
-        const marketInfo = marketsCache.get(mintAddress)?.marketInfo;
-        if (!marketInfo) {
-          return 0.0;
-        }
-
-        const decodedMarket = cache.get(marketInfo?.address.toBase58() || '')?.info;
-        const baseMintDecimals = cache.get(decodedMarket.baseMint)?.info.decimals || 0;
-        const quoteMintDecimals = cache.get(decodedMarket.quoteMint)?.info.decimals || 0;
-
-        const market = new Market(decodedMarket, baseMintDecimals, quoteMintDecimals, undefined, marketInfo?.programId);
-
-        const bids = cache.get(decodedMarket.bids)?.info;
-        const asks = cache.get(decodedMarket.asks)?.info;
-
-        const bidsBook = new Orderbook(market, bids.accountFlags, bids.slab);
-        const asksBook = new Orderbook(market, asks.accountFlags, asks.slab);
-
-        const bestBid = bidsBook.getL2(1);
-        const bestAsk = asksBook.getL2(1);
-
-        if (bestBid.length > 0 && bestAsk.length > 0) {
-          return (bestBid[0][0] + bestAsk[0][0]) / 2.0;
-        }
-
-        return 0;
-      }
-
+    const updateData = () => {
       setDataSource(pools.filter(p => p.pubkeys.holdingMints && p.pubkeys.holdingMints.length > 1).map((p, index) => {
         const mints = (p.pubkeys.holdingMints || []).map((a) => a.toBase58()).sort();
         const indexA = mints[0] === p.pubkeys.holdingMints[0].toBase58() ? 0 : 1;
@@ -193,8 +160,12 @@ export const ChartsView = (props: {}) => {
         const accountB = cache.getAccount(p.pubkeys.holdingAccounts[indexB]);
         const mintB = cache.getMint(mints[1]);
 
-        const liquidityAinUsd = getMidPrice(mints[0]) * convert(accountA, mintA);
-        const liquidityBinUsd = getMidPrice(mints[1]) * convert(accountB, mintB);
+        const liquidityAinUsd = getMidPrice(
+          marketsCache.get(mints[0])?.marketInfo.address.toBase58() || '',
+          mints[0]) * convert(accountA, mintA);
+        const liquidityBinUsd = getMidPrice(
+          marketsCache.get(mints[1])?.marketInfo.address.toBase58() || '',
+          mints[1]) * convert(accountB, mintB);
 
         const poolMint = cache.getMint(p.pubkeys.mint);
         if (poolMint?.supply.eqn(0)) {
@@ -240,7 +211,114 @@ export const ChartsView = (props: {}) => {
           raw: p,
         }
       }).filter(p => p));
-    })();
+
+
+      timer = window.setTimeout(() => updateData(), 200);
+    };
+    const subs: number[] = [];
+
+    const initalQuery = async () => {
+      const allMarkets = [...marketsCache.values()].map(m => m.marketInfo.address.toBase58());
+
+      await getMultipleAccounts(
+        connection,
+        // only query for markets that are not in cahce
+        allMarkets.filter(a => cache.get(a) === undefined),
+        'single')
+        .then(({ keys, array }) => {
+          return array.map((item, index) => {
+            const marketAddress = keys[index];
+            const mintAddress = reverseSerumMarketCache.get(marketAddress);
+            if (mintAddress) {
+              const market = marketsCache.get(mintAddress);
+
+              if (market) {
+                const programId = market.marketInfo.programId;
+                const id = market.marketInfo.address;
+                cache.add(id, item, (id, acc) => {
+                  const decoded = Market.getLayout(programId).decode(acc.data);
+
+                  const details = {
+                    pubkey: id,
+                    account: {
+                      ...acc,
+                    },
+                    info: decoded,
+                  } as ParsedAccountBase;
+
+                  cache.registerParser(details.info.baseMint, MintParser);
+                  cache.registerParser(details.info.quoteMint, MintParser);
+                  cache.registerParser(details.info.bids, OrderBookParser);
+                  cache.registerParser(details.info.asks, OrderBookParser);
+
+                  return details;
+                })
+              }
+            }
+
+            return item;
+          });
+        });
+
+      const toQuery = new Set<string>();
+      const accountsToObserve = new Set<string>();
+      allMarkets.forEach(m => {
+        const market = cache.get(m);
+        if (!market) {
+          return;
+        }
+
+        const decoded = market;
+
+        if (!cache.get(decoded.info.baseMint)) {
+          toQuery.add(decoded.info.baseMint.toBase58());
+        }
+
+        if (!cache.get(decoded.info.baseMint)) {
+          toQuery.add(decoded.info.quoteMint.toBase58());
+        }
+
+        toQuery.add(decoded.info.bids.toBase58());
+        accountsToObserve.add(decoded.info.bids.toBase58());
+
+        toQuery.add(decoded.info.asks.toBase58());
+        accountsToObserve.add(decoded.info.asks.toBase58());
+      })
+
+      await getMultipleAccounts(connection, [...toQuery.keys()], 'single').then(({ keys, array }) => {
+        return array.map((item, index) => {
+          const address = keys[index];
+          return cache.add(new PublicKey(address), item);
+        })
+      });
+
+      // subscribe to all markets by program id  to keep order books updated
+      [...accountsToObserve.keys()].forEach(id => {
+        console.log(`sub id: ${id}`)
+        subs.push(connection.onAccountChange(
+          new PublicKey(id),
+          (info) => {
+            if (cache.get(id)) {
+
+              cache.add(new PublicKey(id), info);
+            }
+          },
+          "singleGossip"
+        ));
+      });
+      // start update loop
+      updateData();
+    };
+
+    initalQuery();
+
+
+
+
+    return () => {
+      subs.forEach(sub => connection.removeProgramAccountChangeListener(sub));
+      window.clearTimeout(timer);
+    };
   }, [pools])
 
   const formatUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
@@ -274,7 +352,7 @@ export const ChartsView = (props: {}) => {
           props: {
             style: { textAlign: 'right' }
           },
-          children: formatUSD.format(record.liquidity),
+          children: <FlashText text={formatUSD.format(record.liquidity)} val={record.liquidity} />,
         };
       },
       sorter: (a: any, b: any) => a.liquidity - b.liquidity,
@@ -289,7 +367,7 @@ export const ChartsView = (props: {}) => {
           props: {
             style: { textAlign: 'right' }
           },
-          children: text,
+          children: <FlashText text={text} val={record.supply} />,
         };
       },
     },
@@ -302,7 +380,7 @@ export const ChartsView = (props: {}) => {
           props: {
             style: { textAlign: 'right' }
           },
-          children: formatUSD.format(record.volume),
+          children: <FlashText text={formatUSD.format(record.volume)} val={record.volume} />,
         };
       },
     },
@@ -320,8 +398,6 @@ export const ChartsView = (props: {}) => {
       }
     },
   ];
-
-
 
   return (
     <>
@@ -344,7 +420,7 @@ export const ChartsView = (props: {}) => {
         <h1>Liquidity: {formatUSD.format(totals.liquidity)}</h1>
         <h1>Volume: {formatUSD.format(totals.volume)}</h1>
       </div>
-      <Table dataSource={dataSource} columns={columns} >
+      <Table dataSource={dataSource} columns={columns} size="small" pagination={{ pageSize: 10 }} >
       </Table>
     </>
   );
