@@ -15,6 +15,7 @@ import { PoolIcon, TokenIcon } from "../tokenIcon";
 import { Market, MARKETS, Orderbook, TOKEN_MINTS } from "@project-serum/serum";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import './styles.less';
+import echarts from 'echarts';
 
 const FlashText = (props: { text: string, val: number }) => {
   const [activeClass, setActiveClass] = useState('');
@@ -108,11 +109,24 @@ export const ChartsView = (props: {}) => {
   const { pools } = useCachedPool();
   const [dataSource, setDataSource] = useState<any[]>([]);
   const [totals, setTotals] = useState<Totals>({ liquidity: 0, volume: 0, fees: 0 });
+  const chartDiv = useRef<HTMLDivElement>(null);
+  const echartsRef = useRef<any>(null);
+  const updateCounterRef = useRef(0);
 
   // separate connection for market updates
   const connection = useMemo(() => new Connection(endpoint, "recent"), [
     endpoint,
   ]);
+
+  useEffect(() => {
+    if (chartDiv.current) {
+      echartsRef.current = echarts.init(chartDiv.current);
+    }
+
+    return () => {
+      echartsRef.current.dispose();
+    }
+  }, []);
 
   // const { ownedPools } = useOwnedPools();
 
@@ -126,7 +140,42 @@ export const ChartsView = (props: {}) => {
       acc.fees = acc.fees + item.fees;
       return acc;
     }, { liquidity: 0, volume: 0, fees: 0 } as Totals));
-  }, [dataSource])
+
+    // update chart on data changes only every 5 ticks
+    if (echartsRef.current && updateCounterRef.current % 5 === 0) {
+      echartsRef.current.setOption({
+        series: [{
+          name: 'Liquidity',
+          type: 'treemap',
+          visibleMin: 300,
+          label: {
+            show: true,
+            formatter: '{b}'
+          },
+          itemStyle: {
+            normal: {
+              borderColor: '#000'
+            }
+          },
+          breadcrumb: {
+            show: false,
+          },
+          data: dataSource.map(row => {
+            return {
+              value: row.liquidity,
+              name: row.name,
+              path: `Liquidity/${row.name}`,
+              data: row,
+            }
+          })
+        }]
+      });
+    }
+
+    if (dataSource.length > 0) {
+      updateCounterRef.current = updateCounterRef.current + 1;
+    }
+  }, [dataSource, echartsRef.current])
 
   useEffect(() => {
     const reverseSerumMarketCache = new Map<string, string>();
@@ -193,6 +242,8 @@ export const ChartsView = (props: {}) => {
         const name = getPoolName(env, p);
         const link = `#/?pair=${name.replace('/', '-')}`;
 
+        const apy = 0.1;
+
         return {
           key: p.pubkeys.account.toBase58(),
           id: index,
@@ -204,10 +255,11 @@ export const ChartsView = (props: {}) => {
           liquidityAinUsd,
           liquidityB: convert(accountB, mintB),
           liquidityBinUsd,
-          supply: lpMint && lpMint?.supply.toNumber() / Math.pow(10, lpMint?.decimals || 0),
+          supply: lpMint && (lpMint?.supply.toNumber() / Math.pow(10, lpMint?.decimals || 0)).toFixed(9),
           fees,
           liquidity: liquidityAinUsd + liquidityBinUsd,
           volume,
+          apy,
           raw: p,
         }
       }).filter(p => p));
@@ -312,16 +364,18 @@ export const ChartsView = (props: {}) => {
 
     initalQuery();
 
-
-
-
     return () => {
-      subs.forEach(sub => connection.removeProgramAccountChangeListener(sub));
+      subs.forEach(sub => connection.removeAccountChangeListener(sub));
       window.clearTimeout(timer);
     };
   }, [pools])
 
   const formatUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const formatPct = new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 
   const columns = [
     {
@@ -385,6 +439,32 @@ export const ChartsView = (props: {}) => {
       },
     },
     {
+      title: 'Fees',
+      dataIndex: 'fees',
+      key: 'fees',
+      render(text: string, record: any) {
+        return {
+          props: {
+            style: { textAlign: 'right' }
+          },
+          children: <FlashText text={formatUSD.format(record.fees)} val={record.fees} />,
+        };
+      },
+    },
+    {
+      title: 'APY',
+      dataIndex: 'apy',
+      key: 'apy',
+      render(text: string, record: any) {
+        return {
+          props: {
+            style: { textAlign: 'right' }
+          },
+          children: formatPct.format(record.apy),
+        };
+      },
+    },
+    {
       title: 'Address',
       dataIndex: 'address',
       key: 'address',
@@ -420,8 +500,9 @@ export const ChartsView = (props: {}) => {
         <h1>Liquidity: {formatUSD.format(totals.liquidity)}</h1>
         <h1>Volume: {formatUSD.format(totals.volume)}</h1>
       </div>
-      <Table dataSource={dataSource} columns={columns} size="small" pagination={{ pageSize: 10 }} >
-      </Table>
+      <div ref={chartDiv} style={{ height: '250px', width: '100%' }} />
+      <Table dataSource={dataSource} columns={columns} size="small" pagination={{ pageSize: 10 }} />
+
     </>
   );
 };
