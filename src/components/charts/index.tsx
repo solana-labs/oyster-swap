@@ -31,6 +31,8 @@ const FlashText = (props: { text: string, val: number }) => {
   return <span className={activeClass}>{props.text}</span>;
 };
 
+const INITAL_LIQUIDITY_DATE = new Date('2020-10-27');
+
 const OrderBookParser = (id: PublicKey, acc: AccountInfo<Buffer>) => {
   const decoded = Orderbook.LAYOUT.decode(acc.data);
 
@@ -200,6 +202,8 @@ export const ChartsView = (props: {}) => {
     let timer = 0;
 
     const updateData = () => {
+      const TODAY = new Date();
+
       setDataSource(pools.filter(p => p.pubkeys.holdingMints && p.pubkeys.holdingMints.length > 1).map((p, index) => {
         const mints = (p.pubkeys.holdingMints || []).map((a) => a.toBase58()).sort();
         const indexA = mints[0] === p.pubkeys.holdingMints[0].toBase58() ? 0 : 1;
@@ -209,10 +213,10 @@ export const ChartsView = (props: {}) => {
         const accountB = cache.getAccount(p.pubkeys.holdingAccounts[indexB]);
         const mintB = cache.getMint(mints[1]);
 
-        const liquidityAinUsd = getMidPrice(
+        const baseReserveUSD = getMidPrice(
           marketsCache.get(mints[0])?.marketInfo.address.toBase58() || '',
           mints[0]) * convert(accountA, mintA);
-        const liquidityBinUsd = getMidPrice(
+        const quoteReserveUSD = getMidPrice(
           marketsCache.get(mints[1])?.marketInfo.address.toBase58() || '',
           mints[1]) * convert(accountB, mintB);
 
@@ -223,6 +227,7 @@ export const ChartsView = (props: {}) => {
 
         let volume = 0;
         let fees = 0;
+        let apy = 0;
         if (p.pubkeys.feeAccount) {
           const feeAccount = cache.getAccount(p.pubkeys.feeAccount);
 
@@ -232,17 +237,30 @@ export const ChartsView = (props: {}) => {
 
             const ownedPct = feeBalance / supply;
 
-            fees = (ownedPct * liquidityAinUsd + ownedPct * liquidityBinUsd);
-            volume = fees / 0.0004;
+            const poolOwnerFees = (ownedPct * baseReserveUSD + ownedPct * quoteReserveUSD);
+            volume = poolOwnerFees / 0.0004;
+            fees = volume * 0.003;
+
+            const baseVolume = ownedPct * baseReserveUSD / 0.0004;
+            const quoteVolume = ownedPct * quoteReserveUSD / 0.0004;
+
+            // Aproximation not true for all pools we need to fine a better way
+            const daysSinceInception = Math.floor((TODAY.getTime() - INITAL_LIQUIDITY_DATE.getTime()) / (24 * 3600 * 1000));
+            const apy0 = parseFloat(baseVolume / daysSinceInception * 0.003 * 356 as any) / baseReserveUSD
+            const apy1 = parseFloat(quoteVolume / daysSinceInception * 0.003 * 356 as any) / quoteReserveUSD
+
+            apy = Math.max(apy0, apy1);
           }
         }
+
+
 
         const lpMint = cache.getMint(p.pubkeys.mint);
 
         const name = getPoolName(env, p);
         const link = `#/?pair=${name.replace('/', '-')}`;
 
-        const apy = 0.1;
+
 
         return {
           key: p.pubkeys.account.toBase58(),
@@ -252,12 +270,12 @@ export const ChartsView = (props: {}) => {
           link,
           mints,
           liquidityA: convert(accountA, mintA),
-          liquidityAinUsd,
+          liquidityAinUsd: baseReserveUSD,
           liquidityB: convert(accountB, mintB),
-          liquidityBinUsd,
+          liquidityBinUsd: quoteReserveUSD,
           supply: lpMint && (lpMint?.supply.toNumber() / Math.pow(10, lpMint?.decimals || 0)).toFixed(9),
           fees,
-          liquidity: liquidityAinUsd + liquidityBinUsd,
+          liquidity: baseReserveUSD + quoteReserveUSD,
           volume,
           apy,
           raw: p,
