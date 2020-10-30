@@ -130,6 +130,7 @@ export const ChartsView = (props: {}) => {
     }
   }, []);
 
+  // TODO: display user percent in the pool
   // const { ownedPools } = useOwnedPools();
 
   // TODO: create cache object with layout type, get, query, add
