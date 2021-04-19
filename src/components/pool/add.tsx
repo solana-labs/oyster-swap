@@ -35,12 +35,16 @@ export const AddToLiquidity = () => {
   const { env } = useConnectionConfig();
   const [options, setOptions] = useState<PoolConfig>({
     curveType: 0,
-    tradeFeeNumerator: 25,
-    tradeFeeDenominator: DEFAULT_DENOMINATOR,
-    ownerTradeFeeNumerator: 5,
-    ownerTradeFeeDenominator: DEFAULT_DENOMINATOR,
-    ownerWithdrawFeeNumerator: 0,
-    ownerWithdrawFeeDenominator: DEFAULT_DENOMINATOR,
+    fees: {
+      tradeFeeNumerator: 25,
+      tradeFeeDenominator: DEFAULT_DENOMINATOR,
+      ownerTradeFeeNumerator: 5,
+      ownerTradeFeeDenominator: DEFAULT_DENOMINATOR,
+      ownerWithdrawFeeNumerator: 0,
+      ownerWithdrawFeeDenominator: DEFAULT_DENOMINATOR,
+      hostFeeNumerator: 0,
+      hostFeeDenominator: DEFAULT_DENOMINATOR
+    }
   });
 
   const executeAction = !connected

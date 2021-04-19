@@ -1,4 +1,4 @@
-import { ENV } from "../utils/connection";
+import { ClusterWithLocalnet } from "../utils/connection";
 import { CurrencyContextState } from "../utils/currencyPair";
 import { getTokenName } from "../utils/utils";
 
@@ -16,7 +16,7 @@ export const ENTER_AMOUNT_LABEL = "Enter an amount";
 export const generateActionLabel = (
   action: string,
   connected: boolean,
-  env: ENV,
+  env: ClusterWithLocalnet,
   A: CurrencyContextState,
   B: CurrencyContextState,
   ignoreToBalance: boolean = false

@@ -1,6 +1,7 @@
 import { useLocalStorageState } from "./utils";
 import {
   Account,
+  Cluster,
   clusterApiUrl,
   Connection,
   Transaction,
@@ -10,16 +11,13 @@ import React, { useContext, useEffect, useMemo } from "react";
 import { setProgramIds } from "./ids";
 import { notify } from "./notifications";
 
-export type ENV = "mainnet-beta" | "testnet" | "devnet" | "localnet";
+export type ClusterWithLocalnet = Cluster | "localnet";
 
 export const ENDPOINTS = [
-  {
-    name: "mainnet-beta" as ENV,
-    endpoint: "https://solana-api.projectserum.com/",
-  },
-  { name: "testnet" as ENV, endpoint: clusterApiUrl("testnet") },
-  { name: "devnet" as ENV, endpoint: clusterApiUrl("devnet") },
-  { name: "localnet" as ENV, endpoint: "http://127.0.0.1:8899" },
+  { name: "mainnet-beta" as ClusterWithLocalnet, endpoint: clusterApiUrl("mainnet-beta") },
+  { name: "testnet" as ClusterWithLocalnet, endpoint: clusterApiUrl("testnet") },
+  { name: "devnet" as ClusterWithLocalnet, endpoint: clusterApiUrl("devnet") },
+  { name: "localnet" as ClusterWithLocalnet, endpoint: "http://127.0.0.1:8899" },
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
@@ -31,7 +29,7 @@ interface ConnectionConfig {
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
-  env: ENV;
+  env: ClusterWithLocalnet;
   setEndpoint: (val: string) => void;
 }
 

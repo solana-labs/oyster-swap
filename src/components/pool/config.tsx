@@ -58,7 +58,7 @@ export const PoolConfigCard = (props: {
     ownerTradeFeeDenominator,
     ownerWithdrawFeeNumerator,
     ownerWithdrawFeeDenominator,
-  } = props.options;
+  } = props.options.fees;
 
   return (
     <Card title="Pool configuration">
@@ -71,8 +71,11 @@ export const PoolConfigCard = (props: {
             set={(numerator, denominator) =>
               props.setOptions({
                 ...props.options,
-                tradeFeeNumerator: numerator,
-                tradeFeeDenominator: denominator,
+                fees: {
+                  ...props.options.fees,
+                  tradeFeeNumerator: numerator,
+                  tradeFeeDenominator: denominator,
+                },
               })
             }
           />
@@ -85,8 +88,11 @@ export const PoolConfigCard = (props: {
             set={(numerator, denominator) =>
               props.setOptions({
                 ...props.options,
-                ownerTradeFeeNumerator: numerator,
-                ownerTradeFeeDenominator: denominator,
+                fees: {
+                  ...props.options.fees,
+                  ownerTradeFeeNumerator: numerator,
+                  ownerTradeFeeDenominator: denominator,
+                },
               })
             }
           />
@@ -99,8 +105,11 @@ export const PoolConfigCard = (props: {
             set={(numerator, denominator) =>
               props.setOptions({
                 ...props.options,
-                ownerWithdrawFeeNumerator: numerator,
-                ownerWithdrawFeeDenominator: denominator,
+                fees: {
+                  ...props.options.fees,
+                  ownerWithdrawFeeNumerator: numerator,
+                  ownerWithdrawFeeDenominator: denominator,
+                },
               })
             }
           />

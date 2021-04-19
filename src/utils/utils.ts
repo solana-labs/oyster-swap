@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { MintInfo } from "@solana/spl-token";
 
 import PopularTokens from "./token-list.json";
-import { ENV } from "./connection";
+import { ClusterWithLocalnet as ENV } from "./connection";
 import { PoolInfo, TokenAccount } from "./../models";
 
 export interface KnownToken {

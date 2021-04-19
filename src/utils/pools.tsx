@@ -25,14 +25,10 @@ import {
   LiquidityComponent,
   PoolInfo,
   TokenAccount,
-  createInitSwapInstruction,
-  TokenSwapLayout,
-  depositInstruction,
-  withdrawInstruction,
   TokenSwapLayoutLegacyV0,
-  swapInstruction,
   PoolConfig,
 } from "./../models";
+import { TokenSwap, TokenSwapLayout } from "@solana/spl-token-swap";
 
 const LIQUIDITY_TOKEN_PRECISION = 8;
 
@@ -114,9 +110,10 @@ export const removeLiquidity = async (
 
   // withdraw
   instructions.push(
-    withdrawInstruction(
+    TokenSwap.withdrawAllTokenTypesInstruction(
       pool.pubkeys.account,
       authority,
+      wallet.pubKey,
       pool.pubkeys.mint,
       pool.pubkeys.feeAccount,
       account.pubkey,
@@ -232,24 +229,25 @@ export const swap = async (
         pool.pubkeys.mint,
         signers
       )
-    : undefined;
+    : null;
 
   // swap
   instructions.push(
-    swapInstruction(
+    TokenSwap.swapInstruction(
       pool.pubkeys.account,
       authority,
+      wallet.pubKey,
       fromAccount,
       holdingA,
       holdingB,
       toAccount,
       pool.pubkeys.mint,
       pool.pubkeys.feeAccount,
+      hostFeeAccount,
       pool.pubkeys.program,
       programIds().token,
       amountIn,
-      minAmountOut,
-      hostFeeAccount
+      minAmountOut
     )
   );
 
@@ -617,9 +615,10 @@ async function _addLiquidityExistingPool(
 
   // depoist
   instructions.push(
-    depositInstruction(
+    TokenSwap.depositAllTokenTypesInstruction(
       pool.pubkeys.account,
       authority,
+      wallet.pubKey,
       fromKeyA,
       fromKeyB,
       pool.pubkeys.holdingAccounts[0],
@@ -921,7 +920,7 @@ async function _addLiquidityNewPool(
   });
 
   instructions.push(
-    createInitSwapInstruction(
+    TokenSwap.createInitSwapInstruction(
       tokenSwapAccount,
       authority,
       holdingAccounts[0].publicKey,
@@ -932,18 +931,20 @@ async function _addLiquidityNewPool(
       programIds().token,
       programIds().swap,
       nonce,
-      options.curveType,
-      options.tradeFeeNumerator,
-      options.tradeFeeDenominator,
-      options.ownerTradeFeeNumerator,
-      options.ownerTradeFeeDenominator,
-      options.ownerWithdrawFeeNumerator,
-      options.ownerWithdrawFeeDenominator
+      options.fees.tradeFeeNumerator,
+      options.fees.tradeFeeDenominator,
+      options.fees.ownerTradeFeeNumerator,
+      options.fees.ownerTradeFeeDenominator,
+      options.fees.ownerWithdrawFeeNumerator,
+      options.fees.ownerWithdrawFeeDenominator,
+      options.fees.hostFeeNumerator,
+      options.fees.hostFeeDenominator,
+      options.curveType
     )
   );
 
   // All instructions didn't fit in single transaction
-  // initialize and provide inital liquidity to swap in 2nd (this prevents loss of funds)
+  // initialize and provide initial liquidity to swap in 2nd (this prevents loss of funds)
   tx = await sendTransaction(
     connection,
     wallet,
