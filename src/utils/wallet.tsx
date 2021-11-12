@@ -8,6 +8,7 @@ export const WALLET_PROVIDERS = [
   { name: "sollet.io", url: "https://www.sollet.io" },
   { name: "solflare.com", url: "https://solflare.com/access-wallet" },
   { name: "mathwallet.org", url: "https://www.mathwallet.org" },
+  { name: "Phantom Wallet", url: "https://phantom.app"}
 ];
 
 const WalletContext = React.createContext<any>(null);
