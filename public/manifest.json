@@ -1,6 +1,6 @@
 {
-  "short_name": "Swap | Serum",
-  "name": "Swap | Serum",
+  "short_name": "Swap | Lamrium",
+  "name": "Swap | Lamrium",
   "icons": [
     {
       "src": "icon.ico",
@@ -8,7 +8,7 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "logo.png",
       "type": "image/png",
       "sizes": "192x192"
     },
