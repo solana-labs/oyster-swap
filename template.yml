@@ -1,0 +1,18 @@
+ version=0.1
+ [default.global.parameters]
+ stack_name = "common-stack"
+ 
+ [default.deploy.parameters]
+ stack_name = "my-app-stack"
+ s3_bucket = "my-source-bucket"
+ s3_prefix = "my-s3-prefix"
+ image_repositories = ["my-function-1=image-repo-1", "my-function-2=image-repo-2"]
+ region = "us-west-2"
+ confirm_changeset = true
+ capabilities = "CAPABILITY_IAM"
+ tags = "project=\"my-application\" stage=\"production\""
+
+ [default.build.parameters]
+ container_env_var = ["Function1.GITHUB_TOKEN=TOKEN1", "Function2.GITHUB_TOKEN=TOKEN2"]
+ container_env_var_file = "env.json"
+ no_beta_features = true

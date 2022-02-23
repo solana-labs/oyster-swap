@@ -6,6 +6,12 @@
       "tokenName": "Solana",
       "icon": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png"
     },
+      {
+      "tokenSymbol": "ANTI",
+      "mintAddress": "0xa2c685a19aA159B3f7fa7b71332a181e1861Ae9d",
+      "tokenName": "Antidote",
+      "icon": "https://oceanmarket.s3.us-west-2.amazonaws.com/antidote-icon-to-be-icon.svg"
+    },
     {
       "tokenSymbol": "BTC",
       "mintAddress": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
