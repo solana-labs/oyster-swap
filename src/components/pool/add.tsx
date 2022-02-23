@@ -123,7 +123,7 @@ export const AddToLiquidity = () => {
           </div>
         }
       >
-        <Button type="text">Read more about providing liquidity.</Button>
+        <Button type="text"></Button>
       </Popover>
 
       <CurrencyInput
