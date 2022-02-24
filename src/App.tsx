@@ -19,7 +19,7 @@ function App() {
           data-icon="octicon-star"
           data-size="large"
           data-show-count={true}
-          aria-label="Star solana-labs/oyster-swap on GitHub"
+          aria-label="Antidote"
         >
           Star
         </GitHubButton>
