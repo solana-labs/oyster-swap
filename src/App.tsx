@@ -8,7 +8,7 @@ function App() {
     <div className="App">
       <div className="Banner">
         <div className="Banner-description">
-          Anti SWap 
+          Antidote Potion Exchange
         </div>
       </div>
       <Routes />
